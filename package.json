@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.5.1",
+    "@supabase/supabase-js": "^2.45.3",
     "@yudiel/react-qr-scanner": "^2.0.8",
     "express": "^4.19.2",
     "next": "14.2.6",
