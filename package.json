@@ -1,32 +1,32 @@
 {
-  "name": "blockchain-tracking",
-  "version": "0.1.0",
+  "name": "blockchain",
   "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@nextui-org/modal": "^2.0.40",
-    "@radix-ui/react-slot": "^1.1.0",
-    "@supabase/ssr": "^0.5.1",
-    "@supabase/supabase-js": "^2.45.3",
     "@yudiel/react-qr-scanner": "^2.0.8",
-    "express": "^4.19.2",
-    "framer-motion": "^11.5.4",
-    "lucide-react": "^0.441.0",
-    "next": "14.2.6",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-qr-reader": "3.0.0-beta-1",
-    "supabase": "^1.190.0"
+    "lucide-react": "^0.446.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
-    "eslint": "^8",
-    "eslint-config-next": "14.2.6",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "@eslint/js": "^9.9.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^9.9.0",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "globals": "^15.9.0",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.0.1",
+    "vite": "^5.4.1"
   }
 }
