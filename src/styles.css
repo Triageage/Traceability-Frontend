@@ -1,0 +1,158 @@
+/* Body Styling */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background-color: #e0f7fa; /* Light cyan background */
+  position: relative;
+  overflow-y: auto; /* Allow vertical scrolling */
+}
+
+/* Full-Screen Camera View (if needed for camera-based pages) */
+#camera {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width of the viewport */
+  height: 100vh; /* Full height of the viewport */
+  object-fit: cover; /* Ensure the camera view covers the entire area */
+  z-index: -1; /* Place camera behind other elements */
+}
+
+/* Form Container */
+div.form-container {
+  display: flex; /* Use flexbox layout */
+  flex-direction: column; /* Stack children vertically */
+  justify-content: space-between; /* Space out the children evenly */
+  height: 100%; /* Allow it to fill available height */
+  background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background to overlay on the camera */
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  margin: 50px auto;
+  box-sizing: border-box;
+  z-index: 10; /* Ensure form stays above other content */
+}
+
+/* Title Styling */
+h1 {
+  font-size: 1.8rem;
+  text-align: center;
+  color: #00796b;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+/* Form Fields */
+form div {
+  margin-bottom: 1.2rem;
+}
+
+/* Labels */
+label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #006064;
+}
+
+/* Input Fields and Select */
+input, select {
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fafafa;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+input:focus, select:focus {
+  border-color: #00796b;
+  background-color: #fff;
+  outline: none;
+}
+
+input:hover, select:hover {
+  border-color: #64b5f6;
+}
+
+/* Button Styling */
+button, .secondary-button {
+  width: 100%;
+  padding: 0.9rem;
+  background-color: #00796b;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 1rem;
+}
+
+button:hover, .secondary-button:hover {
+  background-color: #004d40;
+  transform: translateY(-1px);
+}
+
+/* Logout Button Styling */
+.logout-button {
+  margin-top: 20px; /* Space above the logout button */
+  padding: 0.5rem 1rem;
+  background-color: #d32f2f; /* Red color for logout */
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  align-self: center; /* Center the button */
+}
+
+.logout-button:hover {
+  background-color: #b71c1c; /* Darker red on hover */
+}
+
+/* Success/Error Message Styling */
+p {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #d32f2f;
+}
+
+p.success {
+  color: #388e3c;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  div.form-container {
+      padding: 1.5rem;
+      max-width: 90%;
+  }
+
+  h1 {
+      font-size: 1.6rem;
+  }
+
+  input, select {
+      padding: 0.8rem;
+  }
+
+  button {
+      padding: 0.8rem;
+  }
+}
