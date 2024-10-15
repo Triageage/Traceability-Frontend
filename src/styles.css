@@ -11,7 +11,6 @@ body {
   position: relative;
   overflow-y: auto; /* Allow vertical scrolling */
 }
-
 /* Full-Screen Camera View (if needed for camera-based pages) */
 #camera {
   position: absolute;
@@ -154,5 +153,49 @@ p.success {
 
   button {
       padding: 0.8rem;
+  }
+  /* Content Box Styling */
+.content-box {
+  background-color: #ffffff; /* White background for all content */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem; /* Padding for spacing */
+  margin-bottom: 1.5rem; /* Margin between content boxes */
+}
+
+/* Journey Box Styling */
+.journey-box {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1rem; /* Inner padding for the journey boxes */
+  margin-bottom: 1rem; /* Space between journey boxes */
+  transition: all 0.3s ease;
+  width: 100%; /* Full width for each journey box */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.journey-box:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+/* Stage Time Styling */
+.stage-time {
+  font-size: 0.9rem; /* Slightly smaller font for the stage time */
+  color: #00796b; /* Color to match the theme */
+  margin-top: 0.5rem; /* Space above the time */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .journey-box {
+    width: 100%; /* Full width for each journey box on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .journey-box {
+    width: 100%; /* Full width for each journey box on mobile screens */
   }
 }
