@@ -13,7 +13,9 @@ const ProductReg: React.FC = () => {
   const [companyLocation, setCompanyLocation] = useState<string>('');
   const [uniqueCode, setUniqueCode] = useState<string>(''); 
   const [message, setMessage] = useState<string>('');
-  const qrCodeRef = useRef<HTMLDivElement>(null); // Ref for QR code container
+  const [isLoading, setIsLoading] = useState<boolean>(false); // New loading state
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false); // State to track if form was submitted
+  const qrCodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchCompanyDetails = async () => {
@@ -37,6 +39,8 @@ const ProductReg: React.FC = () => {
 
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setIsLoading(true); // Show loading message
+    setIsSubmitted(true); // Hide the form
 
     const hasValidIngredient = ingredients.some(
       (ingredient) => ingredient.name.trim() !== '' && ingredient.location.trim() !== ''
@@ -44,6 +48,7 @@ const ProductReg: React.FC = () => {
 
     if (!hasValidIngredient) {
       setMessage('Please provide at least one ingredient name and location.');
+      setIsLoading(false); // Stop loading if validation fails
       return;
     }
 
@@ -70,29 +75,14 @@ const ProductReg: React.FC = () => {
       if (response.ok) {
         setMessage('Product registered successfully!');
         setUniqueCode(data.productCode || 'No unique code received');
-        setProductName('');
-        setIngredients([{ name: '', location: '' }]);
       } else {
         setMessage(`Error: ${data.error || 'Unable to register product'}`);
       }
     } catch (error) {
       setMessage('An error occurred while registering the product.');
+    } finally {
+      setIsLoading(false); // Hide loading message
     }
-  };
-
-  const handleAddIngredient = () => {
-    setIngredients([...ingredients, { name: '', location: '' }]);
-  };
-
-  const handleRemoveIngredient = (index: number) => {
-    const newIngredients = ingredients.filter((_, i) => i !== index);
-    setIngredients(newIngredients);
-  };
-
-  const handleIngredientChange = (index: number, field: 'name' | 'location', value: string) => {
-    const newIngredients = [...ingredients];
-    newIngredients[index][field] = value;
-    setIngredients(newIngredients);
   };
 
   const handleLogout = () => {
@@ -136,54 +126,67 @@ const ProductReg: React.FC = () => {
     <div>
       <button onClick={handleLogout} style={{ float: 'right', margin: '10px' }}>Logout</button>
       <h1>Product Registration</h1>
-      <form onSubmit={handleFormSubmit}>
+      
+      {/* Conditional rendering for loading, form, and result */}
+      {isLoading ? (
+        <p>Loading... Please wait.</p>
+      ) : isSubmitted ? (
         <div>
-          <label>Product Name:</label>
-          <input
-            type="text"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            required
-          />
+          {uniqueCode && (
+            <div>
+              <p>Product registered successfully!</p>
+              <p>Unique Code: {uniqueCode}</p>
+              <div ref={qrCodeRef} id="Container">
+                <QRCode value={uniqueCode} />
+              </div>
+              <button onClick={handleCopyQRCode}>Copy QR Code</button>
+            </div>
+          )}
         </div>
-
-        {ingredients.map((ingredient, index) => (
-          <div key={index}>
-            <label>Ingredient Name:</label>
+      ) : (
+        <form onSubmit={handleFormSubmit}>
+          <div>
+            <label>Product Name:</label>
             <input
               type="text"
-              value={ingredient.name}
-              onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
               required
             />
-            <label>Ingredient Location:</label>
-            <input
-              type="text"
-              value={ingredient.location}
-              onChange={(e) => handleIngredientChange(index, 'location', e.target.value)}
-              required
-            />
-            {ingredients.length > 1 && (
-              <button type="button" onClick={() => handleRemoveIngredient(index)}>Remove</button>
-            )}
           </div>
-        ))}
 
-        <button type="button" onClick={handleAddIngredient}>Add Ingredient</button>
-        <button type="submit">Register Product</button>
-      </form>
+          {ingredients.map((ingredient, index) => (
+            <div key={index}>
+              <label>Ingredient Name:</label>
+              <input
+                type="text"
+                value={ingredient.name}
+                onChange={(e) => setIngredients(prevIngredients => {
+                  const newIngredients = [...prevIngredients];
+                  newIngredients[index].name = e.target.value;
+                  return newIngredients;
+                })}
+                required
+              />
+              <label>Ingredient Location:</label>
+              <input
+                type="text"
+                value={ingredient.location}
+                onChange={(e) => setIngredients(prevIngredients => {
+                  const newIngredients = [...prevIngredients];
+                  newIngredients[index].location = e.target.value;
+                  return newIngredients;
+                })}
+                required
+              />
+            </div>
+          ))}
+
+          <button type="submit">Register Product</button>
+        </form>
+      )}
 
       {message && <p>{message}</p>}
-      
-      {uniqueCode && (
-        <div>
-          <p>Unique Code: {uniqueCode}</p>
-          <div ref={qrCodeRef} id="Container">
-            <QRCode value={uniqueCode} />
-          </div>
-          <button onClick={handleCopyQRCode}>Copy QR Code</button>
-        </div>
-      )}
     </div>
   );
 };
