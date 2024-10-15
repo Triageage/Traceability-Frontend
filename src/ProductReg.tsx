@@ -1,35 +1,34 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, useRef } from 'react';
 import './styles.css';
-import { useNavigate } from 'react-router-dom'; // Use useNavigate instead
-
+import { useNavigate } from 'react-router-dom';
+import QRCode from 'react-qr-code';
 
 const ProductReg: React.FC = () => {
-  const navigate = useNavigate(); // Initialize navigate for navigation
+  const navigate = useNavigate();
   const [productName, setProductName] = useState<string>('');
   const [ingredients, setIngredients] = useState<{ name: string; location: string }[]>([
-    { name: '', location: '' }, // Initialize with one ingredient
+    { name: '', location: '' },
   ]);
   const [companyName, setCompanyName] = useState<string>('');
   const [companyLocation, setCompanyLocation] = useState<string>('');
-  const [uniqueCode, setUniqueCode] = useState<string>('');
+  const [uniqueCode, setUniqueCode] = useState<string>(''); 
   const [message, setMessage] = useState<string>('');
+  const qrCodeRef = useRef<HTMLDivElement>(null); // Ref for QR code container
 
-  // Fetch company details from the backend (assuming user data is available in session or JWT)
   useEffect(() => {
     const fetchCompanyDetails = async () => {
       try {
-        const data = localStorage.getItem("data");
-
+        const data = localStorage.getItem('data');
         if (data) {
-          let res = JSON.parse(data);
-          setCompanyName(res.company_name);
-          setCompanyLocation(res.company_location);
+          const parsedData = JSON.parse(data);
+          setCompanyName(parsedData.company_name);
+          setCompanyLocation(parsedData.company_location);
         } else {
-          setMessage(`Error`);
+          setMessage('Error: Company data not found.');
         }
       } catch (error) {
-        console.log(error);
-        setMessage('Error fetching company details');
+        console.error(error);
+        setMessage('Error fetching company details.');
       }
     };
 
@@ -39,25 +38,23 @@ const ProductReg: React.FC = () => {
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Check if at least one ingredient is provided
     const hasValidIngredient = ingredients.some(
-      ingredient => ingredient.name.trim() !== '' && ingredient.location.trim() !== ''
+      (ingredient) => ingredient.name.trim() !== '' && ingredient.location.trim() !== ''
     );
 
     if (!hasValidIngredient) {
       setMessage('Please provide at least one ingredient name and location.');
-      return; // Exit the function if validation fails
+      return;
     }
 
-    // Convert ingredientData to a string format
-    let ingredientDataString = ingredients.map(ingredient => `${ingredient.name}:${ingredient.location}`).join(',');
-    ingredientDataString = "["+ ingredientDataString +"]";
+    const ingredientDataString = `[${ingredients
+      .map((ingredient) => `${ingredient.name}:${ingredient.location}`)
+      .join(',')}]`;
 
-    // Prepare data to be sent to the blockchain API
     const formData = {
       name: productName,
-      ingredientData: ingredientDataString, // Send as a formatted string
-      producerDetails: `[${companyName}:${companyLocation}]`, // Company info
+      ingredientData: ingredientDataString,
+      producerDetails: `[${companyName}:${companyLocation}]`,
     };
 
     try {
@@ -72,10 +69,9 @@ const ProductReg: React.FC = () => {
       const data = await response.json();
       if (response.ok) {
         setMessage('Product registered successfully!');
-        setUniqueCode(data.productCode || 'No unique code received'); // Show unique code if returned
-        // Clear form fields
+        setUniqueCode(data.productCode || 'No unique code received');
         setProductName('');
-        setIngredients([{ name: '', location: '' }]); // Reset to one ingredient
+        setIngredients([{ name: '', location: '' }]);
       } else {
         setMessage(`Error: ${data.error || 'Unable to register product'}`);
       }
@@ -93,18 +89,47 @@ const ProductReg: React.FC = () => {
     setIngredients(newIngredients);
   };
 
-  // Use a union type for the field parameter
   const handleIngredientChange = (index: number, field: 'name' | 'location', value: string) => {
     const newIngredients = [...ingredients];
-    newIngredients[index][field] = value; // No error here
+    newIngredients[index][field] = value;
     setIngredients(newIngredients);
   };
 
-  // Logout handler
   const handleLogout = () => {
-    // Clear any session data if needed
-    localStorage.removeItem("data"); // Optional: Clear stored data
-    navigate('/'); // Redirect to login page using useNavigate
+    localStorage.removeItem('data');
+    navigate('/Login');
+  };
+
+  const handleCopyQRCode = () => {
+    if (qrCodeRef.current) {
+      const svgElement = qrCodeRef.current.querySelector('svg');
+      if (svgElement) {
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const img = new Image();
+        const svgSize = svgElement.getBoundingClientRect();
+        canvas.width = svgSize.width;
+        canvas.height = svgSize.height;
+
+        img.onload = () => {
+          ctx?.drawImage(img, 0, 0);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const clipboardItem = new ClipboardItem({ 'image/png': blob });
+              navigator.clipboard.write([clipboardItem]).then(() => {
+                setMessage('QR code copied to clipboard!');
+              }).catch(() => {
+                setMessage('Failed to copy QR code.');
+              });
+            }
+          });
+        };
+
+        img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
+      }
+    }
   };
 
   return (
@@ -138,7 +163,7 @@ const ProductReg: React.FC = () => {
               onChange={(e) => handleIngredientChange(index, 'location', e.target.value)}
               required
             />
-            {ingredients.length > 1 && ( // Show remove button only if there's more than one ingredient
+            {ingredients.length > 1 && (
               <button type="button" onClick={() => handleRemoveIngredient(index)}>Remove</button>
             )}
           </div>
@@ -149,7 +174,16 @@ const ProductReg: React.FC = () => {
       </form>
 
       {message && <p>{message}</p>}
-      {uniqueCode && <p>Unique Code: {uniqueCode}</p>}
+      
+      {uniqueCode && (
+        <div>
+          <p>Unique Code: {uniqueCode}</p>
+          <div ref={qrCodeRef} id="Container">
+            <QRCode value={uniqueCode} />
+          </div>
+          <button onClick={handleCopyQRCode}>Copy QR Code</button>
+        </div>
+      )}
     </div>
   );
 };
