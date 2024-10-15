@@ -136,12 +136,6 @@ p.success {
   color: #388e3c;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  div.form-container {
-      padding: 1.5rem;
-      max-width: 90%;
-  }
 
   h1 {
       font-size: 1.6rem;
