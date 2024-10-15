@@ -49,7 +49,7 @@ const SignUp: React.FC = () => {
                 journey.map((step, index) => (
                   <div
                     key={index}
-                    className="bg-white bg-opacity-15 shadow-md rounded-md p-5"
+                    className="journey-box" // Updated class to apply new styling
                   >
                     <div className="flex gap-x-2 mb-3">
                       {step.index == 1 ? (
@@ -100,7 +100,6 @@ const SignUp: React.FC = () => {
                     <hr className="my-3 border-0 bg-blue-400 h-px" />
 
                     <div className="flex justify-between px-3">
-                      <p>Timestamp</p>
                       <p>{new Date(step.timestamp).toLocaleString()}</p>
                     </div>
                   </div>

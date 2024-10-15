@@ -3,11 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { MoveLeft } from "lucide-react";
 
-
 export default function QRCodePage() {
   const [name, setName] = useState("");
-  const [journey, setJourney] = useState<any[]>([]);
-  const [productName, setProductName] = useState("");
   const [message, setMessage] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [companyLocation, setCompanyLocation] = useState("");
@@ -20,11 +17,11 @@ export default function QRCodePage() {
       try {
         let details = localStorage.getItem("data");
         if (details) {
-          let res = JSON.parse(details)
+          let res = JSON.parse(details);
           setCompanyName(res.company_name);
           setCompanyLocation(res.company_location);
           setRole(res.role);
-          console.log(res.role,role); // Role will be either 'Manufacturer', 'Distributor', or 'Retailer'
+          console.log(res.role, role); // Role will be either 'Manufacturer', 'Distributor', or 'Retailer'
         } else {
           setMessage("Error fetching user details: ");
         }
@@ -42,14 +39,12 @@ export default function QRCodePage() {
     setMessage("Loading product journey...");
 
     try {
-      // Fetch product history
+      // Fetch product history (removed product journey rendering)
       const journeyUrl = `http://localhost:5000/api/product/${address}`;
       const journeyResult = await fetch(journeyUrl);
       const journeyData = await journeyResult.json();
-      setJourney(journeyData.productHistory);
-      setProductName(journeyData.productHistory[0]?.name || "Unknown Product");
 
-      // After fetching journey, update the blockchain automatically
+      // Automatically update the blockchain after fetching the journey
       await updateBlockchain(address);
     } catch (error) {
       setMessage("An error occurred while fetching product journey.");
@@ -98,40 +93,12 @@ export default function QRCodePage() {
               />
               <div className="flex flex-col mb-8 text-center">
                 <p className="text-2xl font-semibold text-center">
-                  {productName}
+                  Product Code: {name}
                 </p>
                 <p className="text-stone-200 font-light">
-                  Tracking product journey!
+                  Blockchain update in progress...
                 </p>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-7">
-              {journey.length > 0 ? (
-                journey.map((step, index) => (
-                  <div
-                    key={index}
-                    className="bg-white bg-opacity-15 shadow-md rounded-md p-5"
-                  >
-                    <p className="text-lg font-semibold">
-                      Stage {step.index}: {step.stage}
-                    </p>
-                    <p className="bg-blue-900 py-1 px-3 rounded-full w-fit">
-                      {step.performer_details.split(":")[0].slice(1)}
-                    </p>
-                    <p className="ml-3 font-light">
-                      {step.performer_details.split(":")[1].slice(0, -1)}
-                    </p>
-                    <hr className="my-3 border-0 bg-blue-400 h-px" />
-                    <div className="flex justify-between px-3">
-                      <p>Timestamp</p>
-                      <p>{new Date(step.timestamp).toLocaleString()}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>Loading journey data...</p>
-              )}
             </div>
 
             {/* Success or Error Message */}
@@ -145,7 +112,7 @@ export default function QRCodePage() {
                 onClick={() => navigate(-1)} // Navigate back
               />
               <h1 className="text-2xl font-semibold text-center">
-                Scan QR Code from here to get product journey!
+                Scan QR Code from here to get product code!
               </h1>
             </div>
             <Scanner
