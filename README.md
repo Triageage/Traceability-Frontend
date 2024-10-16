@@ -50,9 +50,9 @@ export default tseslint.config({
 ```
 ## Database in MySQL
 
-Name: blockchain
-Number of Tables: 2
-Names of Tables: user, product_codes
+Name: blockchain.
+Number of Tables: 2.
+Names of Tables: user, product_codes.
 
 ## SQL Create statements
 
