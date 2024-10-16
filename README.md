@@ -59,6 +59,8 @@ Names of Tables: user, product_codes
 ## SQL Create statements
 
 - user: 
+
+```sql
 CREATE TABLE `user` (
   `no` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -70,12 +72,16 @@ CREATE TABLE `user` (
   PRIMARY KEY (`no`),
   UNIQUE KEY `email` (`email`)
 );
+```
 
 - product_codes:
+
+```sql
 CREATE TABLE `product_codes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `email` varchar(255) DEFAULT NULL,
   `product_code` varchar(255) DEFAULT NULL,
   `created_on` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) 
+) ;
+```
