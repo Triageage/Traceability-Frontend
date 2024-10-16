@@ -48,13 +48,15 @@ export default tseslint.config({
   },
 })
 ```
-Database in MySQL
+## Database in MySQL
+
 Name: blockchain
 Number of Tables: 2
 Names of Tables: user, product_codes
 
-SQL Create statements
-user: 
+## SQL Create statements
+
+- user: 
 CREATE TABLE `user` (
   `no` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -65,9 +67,9 @@ CREATE TABLE `user` (
   `role` varchar(50) NOT NULL,
   PRIMARY KEY (`no`),
   UNIQUE KEY `email` (`email`)
-)
+);
 
-product_codes:
+- product_codes:
 CREATE TABLE `product_codes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `email` varchar(255) DEFAULT NULL,
