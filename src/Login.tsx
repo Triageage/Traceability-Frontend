@@ -50,6 +50,11 @@ const Login: React.FC = () => {
     navigate("/signup");
   };
 
+  // Function to navigate to homepage
+  const handleHome = () => {
+    navigate("/"); // Assuming the homepage route is "/"
+  };
+
   return (
     <div>
       <h1>Login</h1>
@@ -76,10 +81,13 @@ const Login: React.FC = () => {
       </form>
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
 
-      {/* Signup button */}
+      {/* Signup and Home buttons */}
       <div style={{ marginTop: "20px" }}>
         <p>Don't have an account?</p>
         <button onClick={handleSignup}>Sign Up</button>
+      </div>
+      <div style={{ marginTop: "10px" }}>
+        <button onClick={handleHome}>Home</button>
       </div>
     </div>
   );

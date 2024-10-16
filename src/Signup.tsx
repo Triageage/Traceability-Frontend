@@ -51,6 +51,11 @@ const Signup: React.FC = () => {
     }
   };
 
+  // Function to navigate back to login page
+  const handleBackToLogin = () => {
+    navigate("/login"); // Assuming the login page route is "/login"
+  };
+
   return (
     <div>
       <h1>Signup</h1>
@@ -120,6 +125,11 @@ const Signup: React.FC = () => {
       </form>
 
       {message && <p>{message}</p>}
+
+      {/* Back to Login button */}
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={handleBackToLogin}>Back to Login</button>
+      </div>
     </div>
   );
 };

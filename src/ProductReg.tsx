@@ -13,8 +13,8 @@ const ProductReg: React.FC = () => {
   const [companyLocation, setCompanyLocation] = useState<string>('');
   const [uniqueCode, setUniqueCode] = useState<string>(''); 
   const [message, setMessage] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false); // New loading state
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false); // State to track if form was submitted
+  const [isLoading, setIsLoading] = useState<boolean>(false); 
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false); 
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,8 +39,8 @@ const ProductReg: React.FC = () => {
 
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true); // Show loading message
-    setIsSubmitted(true); // Hide the form
+    setIsLoading(true);
+    setIsSubmitted(true);
 
     const hasValidIngredient = ingredients.some(
       (ingredient) => ingredient.name.trim() !== '' && ingredient.location.trim() !== ''
@@ -48,7 +48,7 @@ const ProductReg: React.FC = () => {
 
     if (!hasValidIngredient) {
       setMessage('Please provide at least one ingredient name and location.');
-      setIsLoading(false); // Stop loading if validation fails
+      setIsLoading(false);
       return;
     }
 
@@ -73,15 +73,37 @@ const ProductReg: React.FC = () => {
 
       const data = await response.json();
       if (response.ok) {
-        setMessage('Product registered successfully!');
+        setMessage('Product registered successfully!');  // Initial success message
         setUniqueCode(data.productCode || 'No unique code received');
+
+        // Get the email from localStorage and send the uniqueCode and email to the backend
+        const localData = localStorage.getItem('data');
+        if (localData) {
+          const parsedData = JSON.parse(localData);
+          const email = parsedData.email;
+
+          // Send product code and email to the backend for storage
+          const storeResponse = await fetch('http://localhost:3000/api/storeProductCode', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, productCode: data.productCode }),
+          });
+
+          if (storeResponse.ok) {
+            setMessage('Product code stored successfully!');  // Final message when stored
+          } else {
+            setMessage('Error storing product code');
+          }
+        }
       } else {
         setMessage(`Error: ${data.error || 'Unable to register product'}`);
       }
     } catch (error) {
       setMessage('An error occurred while registering the product.');
     } finally {
-      setIsLoading(false); // Hide loading message
+      setIsLoading(false);
     }
   };
 
@@ -126,8 +148,7 @@ const ProductReg: React.FC = () => {
     <div>
       <button onClick={handleLogout} style={{ float: 'right', margin: '10px' }}>Logout</button>
       <h1>Product Registration</h1>
-      
-      {/* Conditional rendering for loading, form, and result */}
+
       {isLoading ? (
         <p>Loading... Please wait.</p>
       ) : isSubmitted ? (
