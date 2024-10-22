@@ -46,3 +46,4 @@ function AggregatorForm() {
   <button type="button" onClick={handleAddIngredient}>+</button>
   <button type="submit">Submit</button>
 </form>
+}
