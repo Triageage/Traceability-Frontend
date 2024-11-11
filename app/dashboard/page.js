@@ -21,7 +21,7 @@ export default function Dashboard() {
    const [loading, setLoading] = useState(false);
    const [done, setDone] = useState(false);
    const [productCode, setProductCode] = useState("");
-   const qrCodeRef = useRef(null);
+   const qrCodeContainerRef = useRef(null);
 
    useEffect(() => {
       const fetchUserData = async () => {
@@ -146,17 +146,20 @@ export default function Dashboard() {
    };
 
    const copyToClipboard = () => {
-      if (qrCodeRef.current) {
-         const svg = qrCodeRef.current.querySelector("svg");
+      if (qrCodeContainerRef.current) {
+         const container = qrCodeContainerRef.current;
+         const svg = container.querySelector("svg");
          const canvas = document.createElement("canvas");
          const ctx = canvas.getContext("2d");
          const svgData = new XMLSerializer().serializeToString(svg);
          const img = new Image();
-   
+
          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            canvas.width = img.width + 20;
+            canvas.height = img.height + 20;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 10, 10);
             canvas.toBlob((blob) => {
                navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(() => {
                   alert("QR code image copied to clipboard!");
@@ -182,20 +185,22 @@ export default function Dashboard() {
             )}
 
             {productCode && (
-         <div className="bg-green-200 p-3 mb-5 w-full rounded-md">
-            <p className="text-lg font-semibold text-center break-words text-green-700">
-               Product Code: {productCode}
-            </p>
-            <div className="flex justify-center mt-2" ref={qrCodeRef}>
-               <QRCode value={productCode} />
-            </div>
-            <div className="flex justify-center mt-2">
-               <button onClick={copyToClipboard} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Copy to clipboard
-               </button>
-            </div>
-         </div>
-      )}
+               <div className="bg-green-200 p-3 mb-5 w-full rounded-md">
+                  <p className="text-lg font-semibold text-center break-words text-green-700">
+                     Product Code: {productCode}
+                  </p>
+                  <div className="flex justify-center mt-2" ref={qrCodeContainerRef}>
+                     <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '8px' }}>
+                        <QRCode value={productCode}/>
+                     </div>
+                  </div>
+                  <div className="flex justify-center mt-2">
+                     <button onClick={copyToClipboard} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Copy to clipboard
+                     </button>
+                  </div>
+               </div>
+            )}
 
             {loading && (
                <div className=" fixed inset-0 z-20 bg-white backdrop-blur-sm bg-opacity-20 flex justify-center items-center h-screen">
