@@ -22,7 +22,7 @@ export default function SignUp() {
       const result = await fetch(url);
       const data = await result.json();
       setJourney(data.productHistory);
-      setProductName(data.productHistory[1].name);
+      setProductName(data.productHistory[0].name);
    }
 
    return (
