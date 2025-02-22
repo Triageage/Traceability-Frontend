@@ -25,6 +25,12 @@ export default function SignUp() {
       setProductName(data.productHistory[1].name);
    }
 
+   function calculateExpiryDate(manufactureDate) {
+      const date = new Date(manufactureDate);
+      date.setMonth(date.getMonth() + 6);
+      return date.toLocaleDateString();
+   }
+
    return (
       <main className="min-h-lvh h-full bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 text-white">
          <div className="p-5">
@@ -109,6 +115,12 @@ export default function SignUp() {
                                  <p>Timestamp</p>
                                  <p>
                                     {new Date(step.timestamp).toLocaleString()}
+                                 </p>
+                              </div>
+                              <div className="flex justify-between px-3">
+                                 <p>Expiry Date</p>
+                                 <p>
+                                    {calculateExpiryDate(step.timestamp)}
                                  </p>
                               </div>
                            </div>

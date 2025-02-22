@@ -20,8 +20,6 @@ export default function Dashboard() {
    const [loading, setLoading] = useState(false);
    const [done, setDone] = useState(false);
    const [productCode, setProductCode] = useState("");
-   const [manufacturingDate, setManufacturingDate] = useState("");
-   const [expiryDate, setExpiryDate] = useState("");
 
    useEffect(() => {
       const fetchUserData = async () => {
@@ -144,15 +142,6 @@ export default function Dashboard() {
          const final = await response.json();
          console.log("Result:", final);
 
-         // Assuming the response contains the manufacturing date
-         const manufacturingDate = final.manufacturingDate;
-         setManufacturingDate(manufacturingDate);
-
-         // Calculate the expiry date (assuming 1 year shelf life)
-         const expiryDate = new Date(manufacturingDate);
-         expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-         setExpiryDate(expiryDate.toISOString().split('T')[0]);
-
          setLoading(false);
          setDone(true);
 
@@ -176,12 +165,6 @@ export default function Dashboard() {
                <div className="bg-green-200 p-3 mb-5 w-full rounded-md">
                   <p className="text-lg font-semibold text-center break-words text-green-700">
                      Product Code: {productCode}
-                  </p>
-                  <p className="text-lg font-semibold text-center break-words text-green-700">
-                     Manufacturing Date: {manufacturingDate}
-                  </p>
-                  <p className="text-lg font-semibold text-center break-words text-green-700">
-                     Expiry Date: {expiryDate}
                   </p>
                </div>
             )}
