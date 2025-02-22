@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 
+/**
+ * The main dashboard component.
+ * This component is responsible for rendering the dashboard page and handling all the logic related to the dashboard.
+ *
+ * @returns {JSX.Element} The dashboard page.
+ */
 export default function Dashboard() {
    const router = useRouter();
    const user_metadata = JSON.parse(localStorage.getItem("user_metadata"));
@@ -20,6 +26,7 @@ export default function Dashboard() {
    const [loading, setLoading] = useState(false);
    const [done, setDone] = useState(false);
    const [productCode, setProductCode] = useState("");
+   const [expiryDate, setExpiryDate] = useState(""); // Add this line
 
    useEffect(() => {
       const fetchUserData = async () => {
@@ -102,6 +109,7 @@ export default function Dashboard() {
          name: productName,
          ingredientData: ing,
          producerDetails: `[${companyName}:${location}]`,
+         expiryDate: new Date(expiryDate).getTime() / 1000, // Add this line
       };
 
       const response = await fetch(url, {
@@ -308,6 +316,13 @@ export default function Dashboard() {
                               </div>
                            </form>
                         </div>
+                        <h2 className="text-lg font-semibold mb-2">Enter Expiry Date</h2>
+                        <input
+                           type="date"
+                           value={expiryDate}
+                           onChange={(e) => setExpiryDate(e.target.value)}
+                           className="flex-1 px-3 py-2 text-black rounded"
+                        />
                      </div>
                   ) : (
                      <div className="mt-8 z-10">
