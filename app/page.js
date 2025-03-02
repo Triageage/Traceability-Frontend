@@ -4,6 +4,8 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGeolocated } from "react-geolocated";
+import { isPointWithinRadius } from "geolib";
 
 export default function Home() {
    const router = useRouter();
@@ -15,6 +17,29 @@ export default function Home() {
          router.push("/dashboard");
       }
    }, []);
+
+   const { coords } = useGeolocated({
+      positionOptions: {
+         enableHighAccuracy: true,
+      },
+      userDecisionTimeout: 5000,
+   });
+
+   const getUserLocation = () => {
+      if (coords) {
+         console.log(coords);
+         console.log(coords.latitude);
+         console.log(coords.longitude);
+
+         const result = isPointWithinRadius(
+            {latitude: coords.latitude, longitude: coords.longitude},
+            {latitude: 13.1359186, longitude: 80.2356058},
+            coords.accuracy
+         )
+
+         console.log(result);
+      }
+   };
 
    return (
       <main className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 text-white">
@@ -56,6 +81,12 @@ export default function Home() {
                   className="bg-blue-700 hover:bg-blue-500 text-white font-bold py-2 px-4 border-2 border-white rounded-md transition-colors"
                >
                   Sign Up
+               </Link>
+               <Link
+                  href="/"
+                  onClick={getUserLocation}
+                  className="bg-blue-700 hover:bg-blue-500 text-white font-bold py-2 px-4 border-2 border-white rounded-md transition-colors">
+               get Location
                </Link>
             </div>
          </div>
