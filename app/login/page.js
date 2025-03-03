@@ -15,7 +15,7 @@ export default function Login() {
       if (localStorage.getItem("access_token")) {
          router.push("/dashboard");
       }
-   }, []);
+   }, [router]);
 
    const handleSubmit = async (event) => {
       event.preventDefault();
@@ -53,7 +53,7 @@ export default function Login() {
             <div className="bg-white bg-opacity-15 p-8 rounded-md shadow w-8/12">
                <h1 className="text-2xl font-bold drop-shadow-sm">Login</h1>
                <p className="text-gray-200 mb-4 text-sm font-light drop-shadow-sm">
-                  Let's get started
+                  Let&apos;s get started
                </p>
                <form onSubmit={handleSubmit}>
                   {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -95,6 +95,15 @@ export default function Login() {
                         type="submit"
                      >
                         Login
+                     </button>
+                  </div>
+                  <div className="flex items-center justify-center mt-4">
+                     <button
+                        className="shadow-md font-semibold bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors"
+                        type="button"
+                        onClick={() => router.push("/superuser/super")}
+                     >
+                        Super User
                      </button>
                   </div>
                </form>
