@@ -101,7 +101,7 @@ export default function Login() {
                      <button
                         className="shadow-md font-semibold bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors"
                         type="button"
-                        onClick={() => router.push("/superuser/super")}
+                        onClick={() => router.push("/superuser")}
                      >
                         Super User
                      </button>
