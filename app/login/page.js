@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
+import { ArrowLeft } from "lucide-react"; // Import Lucide React Icon
 
 export default function Login() {
    const router = useRouter();
@@ -48,7 +49,16 @@ export default function Login() {
    };
 
    return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 text-white">
+      <main className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 text-white relative">
+         {/* Back Arrow Button */}
+         <button
+            onClick={() => router.push("/")} // Navigate to home (page.js)
+            className="absolute top-4 left-4 flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
+         >
+            <ArrowLeft size={24} /> {/* Lucide React Back Arrow Icon */}
+            <span className="font-semibold">Back</span>
+         </button>
+
          <div className="flex flex-col items-center justify-center h-[calc(100vh-73px)]">
             <div className="bg-white bg-opacity-15 p-8 rounded-md shadow w-8/12">
                <h1 className="text-2xl font-bold drop-shadow-sm">Login</h1>
