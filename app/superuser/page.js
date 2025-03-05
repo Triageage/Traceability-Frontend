@@ -83,37 +83,49 @@ export default function Superuser() {
                     Logout
                 </button>
                 {error && <p className="text-red-500">{error}</p>}
-                <div className="mt-8">
-                    <h2 className="text-xl font-bold">Approval Data</h2>
-                    <table className="table-auto mt-4">
+                <div className="mt-8 w-full flex flex-col items-center">
+                    {/* Centered Heading */}
+                    <h2 className="text-xl font-bold text-center mb-4">Approval Data</h2>
+
+                    {/* Table with always visible borders */}
+                    <table className="border border-white border-collapse w-full max-w-4xl">
                         <thead>
-                            <tr>
-                                <th className="px-4 py-2">ID</th>
-                                <th className="px-4 py-2">Created At</th>
-                                <th className="px-4 py-2">Company Name</th>
-                                <th className="px-4 py-2">Approved</th>
-                                <th className="px-4 py-2">Actions</th>
+                            <tr className="bg-blue-800">
+                                <th className="border border-white px-4 py-2">ID</th>
+                                <th className="border border-white px-4 py-2">Created At</th>
+                                <th className="border border-white px-4 py-2">Company Name</th>
+                                <th className="border border-white px-4 py-2">Approved</th>
+                                <th className="border border-white px-4 py-2">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {approvalData.map((item) => (
-                                <tr key={item.id}>
-                                    <td className="border px-4 py-2">{item.id}</td>
-                                    <td className="border px-4 py-2">{item.created_at}</td>
-                                    <td className="border px-4 py-2">{item.user_data?.company_name || "N/A"}</td>
-                                    <td className="border px-4 py-2">{item.user_data?.approved ? "Yes" : "No"}</td>
-                                    <td className="border px-4 py-2">
-                                        {!item.user_data?.approved && (
-                                            <button
-                                                onClick={() => handleApprove(item.user_data.id, item.id)}
-                                                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                                            >
-                                                Approve
-                                            </button>
-                                        )}
+                            {approvalData.length > 0 ? (
+                                approvalData.map((item) => (
+                                    <tr key={item.id} className="bg-blue-700">
+                                        <td className="border border-white px-4 py-2">{item.id}</td>
+                                        <td className="border border-white px-4 py-2">{item.created_at}</td>
+                                        <td className="border border-white px-4 py-2">{item.user_data?.company_name || "N/A"}</td>
+                                        <td className="border border-white px-4 py-2">{item.user_data?.approved ? "Yes" : "No"}</td>
+                                        <td className="border border-white px-4 py-2">
+                                            {!item.user_data?.approved && (
+                                                <button
+                                                    onClick={() => handleApprove(item.user_data.id, item.id)}
+                                                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                                                >
+                                                    Approve
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                // Empty row when no data is available
+                                <tr className="bg-blue-700">
+                                    <td className="border border-white px-4 py-2 text-center" colSpan="5">
+                                        No pending approvals
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
