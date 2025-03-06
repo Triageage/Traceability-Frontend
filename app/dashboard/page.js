@@ -89,6 +89,7 @@ export default function Dashboard() {
                     `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
                 );
                 const data = await response.json();
+                console.log(data); // Print the location data in table format
                 if (data && data.address) {
                     const address = `${data.address.road || ""}, ${data.address.city || ""}, ${data.address.state || ""}, ${data.address.country || ""}`;
                     setLocation(address);

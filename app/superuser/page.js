@@ -1,5 +1,4 @@
 "use client";
-// detailed documentation: https://supabase.io/docs/guides/with-nextjs
 
 import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
