@@ -82,7 +82,7 @@ export default function Dashboard() {
     }, [user_id]);
 
     useEffect(() => {
-        if (coords) {
+        if (coords && !location) {
             const { latitude, longitude } = coords;
             const fetchAddress = async () => {
                 const response = await fetch(
@@ -99,7 +99,7 @@ export default function Dashboard() {
             };
             fetchAddress();
         }
-    }, [coords]);
+    }, [coords, location]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
