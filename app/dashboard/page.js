@@ -82,13 +82,14 @@ export default function Dashboard() {
     }, [user_id]);
 
     useEffect(() => {
-        if (coords) {
+        if (coords && !location) {
             const { latitude, longitude } = coords;
             const fetchAddress = async () => {
                 const response = await fetch(
                     `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
                 );
                 const data = await response.json();
+                console.log(data); // Print the location data in table format
                 if (data && data.address) {
                     const address = `${data.address.road || ""}, ${data.address.city || ""}, ${data.address.state || ""}, ${data.address.country || ""}`;
                     setLocation(address);
@@ -98,7 +99,7 @@ export default function Dashboard() {
             };
             fetchAddress();
         }
-    }, [coords]);
+    }, [coords, location]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
