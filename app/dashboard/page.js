@@ -431,24 +431,28 @@ export default function Dashboard() {
                         ) : (
                             <div>
                                 {user_metadata.role === "Manufacturer" && (
-                                    <div className="bg-white bg-opacity-15 p-4 rounded-md shadow flex gap-4 items-center justify-between">
-                                        <h2 className="text-lg font-semibold mb-2">
-                                            Enter Expiry Date
-                                        </h2>
-                                        <input
-                                            type="date"
-                                            placeholder="expiry date"
-                                            onChange={(e) => {
-                                                expirydate.current = new Date(
-                                                    e.target.value
-                                                );
-                                            }}
-                                            className="px-3 py-2 text-black rounded w-48"
-                                        />
-                                    </div>
-                                )}
+    <div className="bg-white bg-opacity-15 p-4 rounded-md shadow flex gap-4 items-center justify-between">
+        <h2 className="text-lg font-semibold mb-2"> 
+            Enter Expiry Date
+        </h2>
+        <input
+            type="date"
+            placeholder="expiry date"
+            onChange={(e) => {
+                expirydate.current = new Date(e.target.value);
+            }}
+            className="px-3 py-2 text-black rounded w-48"
+        />
+<p className="text-red-900 font-bold text-lg">
+    ⚠️ Products must be registered within 
+    <span className="font-extrabold text-xl"> 10 days </span> of manufacturing!
+</p>
 
-                                {user_metadata.role === "Distributor" &&
+    </div>
+)}
+
+
+                      {user_metadata.role === "Distributor" &&
                                 fullUserData.approved === false &&
                                 requestApproval === false ? (
                                     <div>
@@ -464,6 +468,11 @@ export default function Dashboard() {
                                                 Request
                                             </button>
                                         </div>
+                                        <p className="text-red-900 font-bold text-lg mt-2">
+    ⚠️ Distributors must register the product within 
+    <span className="font-extrabold text-xl text-red-900"> 12 days </span> of distribution!
+</p>
+
                                     </div>
                                 ) : (
                                     <div>
