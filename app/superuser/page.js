@@ -3,7 +3,7 @@
 import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabaseClient"; // Adjust the import path as needed
+import { supabase } from "@/utils/supabaseClient";
 
 export default function Superuser() {
     const router = useRouter();
@@ -37,38 +37,66 @@ export default function Superuser() {
     };
 
     const handleApprove = async (userId, approvalId) => {
-        console.log("Approving user with ID:", userId);
-
-        // Step 1: Update the `approved` column in `user_data`
-        const { error: updateError } = await supabase
-            .from("user_data")
-            .update({ approved: true })
-            .eq("id", userId);
-
-        if (updateError) {
-            console.error("Error updating user_data:", updateError);
-            setError(updateError.message);
+        if (!userId) {
+            console.error("Error: Missing userId in request");
             return;
         }
 
-        console.log("User approved successfully in user_data");
+        console.log("Approving distributor with ID:", userId);
 
-        // Step 2: Delete the row from `approval_data`
-        const { error: deleteError } = await supabase
-            .from("approval_data")
-            .delete()
-            .eq("id", approvalId);
+        try {
+            // Step 1: Send approval request to the backend API
+            const response = await fetch("http://localhost:5000/api/approve/distributor", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ distributorCode: userId }),
+            });
 
-        if (deleteError) {
-            console.error("Error deleting from approval_data:", deleteError);
-            setError(deleteError.message);
-            return;
+            const data = await response.json();
+            console.log("Response from backend:", data);
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to approve distributor. Please try again.");
+            }
+
+            console.log("Distributor approved successfully!");
+
+            // Step 2: Update `approved` column in `user_data` table
+            const { error: updateError } = await supabase
+                .from("user_data")
+                .update({ approved: true }) // Setting approved to TRUE
+                .eq("id", userId);
+
+            if (updateError) {
+                console.error("Error updating user_data:", updateError);
+                setError(updateError.message);
+                return;
+            }
+
+            console.log("User approved successfully in user_data");
+
+            // Step 3: Delete the row from `approval_data`
+            const { error: deleteError } = await supabase
+                .from("approval_data")
+                .delete()
+                .eq("id", approvalId);
+
+            if (deleteError) {
+                console.error("Error deleting from approval_data:", deleteError);
+                setError(deleteError.message);
+                return;
+            }
+
+            console.log("Deleted approval entry from approval_data");
+
+            // Step 4: Refresh the approval list after all updates are complete
+            fetchApprovalData();
+        } catch (error) {
+            console.error("Approval error:", error);
+            setError(error.message);
         }
-
-        console.log("Deleted approval entry from approval_data");
-
-        // Step 3: Re-fetch updated data from Supabase
-        fetchApprovalData();
     };
 
     return (
@@ -84,24 +112,21 @@ export default function Superuser() {
                 </button>
                 {error && <p className="text-red-500">{error}</p>}
                 <div className="mt-8 w-full flex flex-col items-center">
-                    {/* Centered Heading */}
-                    <h2 className="text-xl font-bold text-center mb-4">Approval Data</h2>
-
-                    {/* Table with always visible borders */}
-                    <table className="border border-white border-collapse w-full max-w-4xl">
+                    <h2 className="text-xl font-bold text-center">Approval Data</h2>
+                    <table className="table-auto mt-4 border-collapse border border-white w-3/4 text-center">
                         <thead>
-                            <tr className="bg-blue-800">
-                                <th className="border border-white px-4 py-2">ID</th>
-                                <th className="border border-white px-4 py-2">Created At</th>
-                                <th className="border border-white px-4 py-2">Company Name</th>
-                                <th className="border border-white px-4 py-2">Approved</th>
-                                <th className="border border-white px-4 py-2">Actions</th>
+                            <tr className="border border-white">
+                                <th className="px-4 py-2 border border-white">ID</th>
+                                <th className="px-4 py-2 border border-white">Created At</th>
+                                <th className="px-4 py-2 border border-white">Company Name</th>
+                                <th className="px-4 py-2 border border-white">Approved</th>
+                                <th className="px-4 py-2 border border-white">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {approvalData.length > 0 ? (
                                 approvalData.map((item) => (
-                                    <tr key={item.id} className="bg-blue-700">
+                                    <tr key={item.id} className="border border-white">
                                         <td className="border border-white px-4 py-2">{item.id}</td>
                                         <td className="border border-white px-4 py-2">{item.created_at}</td>
                                         <td className="border border-white px-4 py-2">{item.user_data?.company_name || "N/A"}</td>
@@ -119,10 +144,9 @@ export default function Superuser() {
                                     </tr>
                                 ))
                             ) : (
-                                // Empty row when no data is available
-                                <tr className="bg-blue-700">
-                                    <td className="border border-white px-4 py-2 text-center" colSpan="5">
-                                        No pending approvals
+                                <tr>
+                                    <td colSpan="5" className="border border-white py-4">
+                                        No data available
                                     </td>
                                 </tr>
                             )}
