@@ -79,7 +79,7 @@ export default function Dashboard() {
         if (user_id) {
             fetchUserData();
         }
-    }, [user_id]);
+    }, [fullUserData, user_id]);
 
     useEffect(() => {
         if (coords && !location) {

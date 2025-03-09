@@ -16,7 +16,7 @@ export default function Home() {
       if (localStorage.getItem("access_token")) {
          router.push("/dashboard");
       }
-   }, []);
+   }, [loggedin, router]);
 
    const { coords } = useGeolocated({
       positionOptions: {
