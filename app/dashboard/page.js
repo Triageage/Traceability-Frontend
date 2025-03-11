@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { X, ArrowLeft } from "lucide-react";
 import { useGeolocated } from "react-geolocated";
-import { getDistance, getPreciseDistance, isPointWithinRadius } from "geolib";
+import { getDistance, getPreciseDistance } from "geolib";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -25,7 +25,6 @@ export default function Dashboard() {
     const [done, setDone] = useState(false);
     const [productCode, setProductCode] = useState("");
     const [requestApproval, setRequestApproval] = useState(false);
-    const [isWithinRadius, setIsWithinRadius] = useState(false);
     let expirydate = useRef("");
     const [retailerModal, setRetailerModal] = useState(false);
 
@@ -35,23 +34,6 @@ export default function Dashboard() {
         },
         userDecisionTimeout: 5000,
     });
-
-    const getUserLocation = () => {
-        if (coords && fullUserData.coordinates) {
-            console.log(coords);
-            console.log(coords.latitude);
-            console.log(coords.longitude);
-
-            const result = isPointWithinRadius(
-                { latitude: coords.latitude, longitude: coords.longitude },
-                { latitude: fullUserData.coordinates.latitude, longitude: fullUserData.coordinates.longitude },
-                fullUserData.coordinates.accuracy
-            );
-
-            console.log(result);
-            setIsWithinRadius(result);
-        }
-    };
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -100,44 +82,74 @@ export default function Dashboard() {
     }, [user_id]);
 
     useEffect(() => {
-        if (coords && !location) {
-            getUserLocation();
-            const { latitude, longitude } = coords;
-            const fetchAddress = async () => {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-                );
-                const data = await response.json();
-                console.log(data); // Print the location data in table format
-                if (data && data.address) {
-                    const address = `${data.address.road || ""}, ${data.address.city || ""}, ${data.address.state || ""}, ${data.address.country || ""}`;
-                    setLocation(address);
-                } else {
-                    setError("Unable to fetch address");
-                }
-            };
-            fetchAddress();
+        const fetchLocationFromDB = async () => {
+            let { data: user_data, error } = await supabase
+                .from("user_data")
+                .select("location, coordinates")
+                .eq("id", user_id);
+
+            if (error) {
+                setError(error.message);
+                return;
+            }
+
+            if (user_data && user_data.length > 0 && user_data[0].location) {
+                setLocation(user_data[0].location);
+            } else if (coords && !location) {
+                const { latitude, longitude, accuracy } = coords;
+                const fetchAddress = async () => {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+                    console.log(data); // Print the location data in table format
+                    if (data && data.address) {
+                        const address = `${data.address.road || ""}, ${data.address.city || ""}, ${data.address.state || ""}, ${data.address.country || ""}`;
+                        setLocation(address);
+
+                        // Store the coordinates in the database
+                        const { error: updateError } = await supabase
+                            .from("user_data")
+                            .update({ 
+                                coordinates: { 
+                                    latitude: coords.latitude,
+                                    longitude: coords.longitude,
+                                    accuracy: coords.accuracy, 
+                                } 
+                            })
+                            .eq("id", user_id);
+
+                        if (updateError) {
+                            setError(updateError.message);
+                        }
+                    } else {
+                        setError("Unable to fetch address");
+                    }
+                };
+                fetchAddress();
+            }
+        };
+
+        if (user_id) {
+            fetchLocationFromDB();
         }
-    }, [coords, getUserLocation, location]);
+    }, [coords, location, user_id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const coordinates = coords
-            ? {
-                  latitude: coords.latitude,
-                  longitude: coords.longitude,
-                  accuracy: coords.accuracy,
-              }
-            : null;
+        
+        let coordinates = null;
+        if (coords) {
+            coordinates = {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+                accuracy: coords.accuracy
+            };
+        }
 
         const { data, error } = await supabase
             .from("user_data")
-            .upsert({
-                id: user_id,
-                location,
-                company_name: companyName,
-                coordinates,
-            })
+            .upsert({ id: user_id, location, company_name: companyName, coordinates })
             .select();
 
         if (error) {
@@ -482,8 +494,8 @@ export default function Dashboard() {
                                 )}
 
                                 {user_metadata.role === "Distributor" &&
-                                fullUserData.approved === false &&
-                                requestApproval === false ? (
+                                !fullUserData.approved &&
+                                !requestApproval ? (
                                     <div>
                                         <div className="bg-white bg-opacity-15 p-4 rounded-md shadow flex gap-4 items-center justify-between">
                                             <h2 className="text-lg font-semibold">
@@ -502,8 +514,8 @@ export default function Dashboard() {
                                     <div>
                                         {user_metadata.role ===
                                             "Distributor" &&
-                                            fullUserData.approved === false &&
-                                            requestApproval === true && (
+                                            !fullUserData.approved &&
+                                            requestApproval && (
                                                 <div>
                                                     <div className="bg-white bg-opacity-15 p-4 rounded-md shadow flex gap-4 items-center justify-between">
                                                         <h2 className="text-lg font-semibold">
@@ -530,7 +542,6 @@ export default function Dashboard() {
                                                 }
                                                 formats={["qr_code"]}
                                                 components={{
-
                                                     zoom: true,
                                                     audio: false,
                                                     finder: false,
