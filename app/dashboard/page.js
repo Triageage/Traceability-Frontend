@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { X, ArrowLeft } from "lucide-react";
 import { useGeolocated } from "react-geolocated";
-import { getDistance, getPreciseDistance } from "geolib";
+import { getDistance, getPreciseDistance, isPointWithinRadius } from "geolib";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -25,6 +25,7 @@ export default function Dashboard() {
     const [done, setDone] = useState(false);
     const [productCode, setProductCode] = useState("");
     const [requestApproval, setRequestApproval] = useState(false);
+    const [isWithinRadius, setIsWithinRadius] = useState(false);
     let expirydate = useRef("");
     const [retailerModal, setRetailerModal] = useState(false);
 
@@ -34,6 +35,23 @@ export default function Dashboard() {
         },
         userDecisionTimeout: 5000,
     });
+
+    const getUserLocation = () => {
+        if (coords && fullUserData.coordinates) {
+            console.log(coords);
+            console.log(coords.latitude);
+            console.log(coords.longitude);
+
+            const result = isPointWithinRadius(
+                { latitude: coords.latitude, longitude: coords.longitude },
+                { latitude: fullUserData.coordinates.latitude, longitude: fullUserData.coordinates.longitude },
+                fullUserData.coordinates.accuracy
+            );
+
+            console.log(result);
+            setIsWithinRadius(result);
+        }
+    };
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -83,6 +101,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (coords && !location) {
+            getUserLocation();
             const { latitude, longitude } = coords;
             const fetchAddress = async () => {
                 const response = await fetch(
@@ -99,13 +118,26 @@ export default function Dashboard() {
             };
             fetchAddress();
         }
-    }, [coords, location]);
+    }, [coords, getUserLocation, location]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const coordinates = coords
+            ? {
+                  latitude: coords.latitude,
+                  longitude: coords.longitude,
+                  accuracy: coords.accuracy,
+              }
+            : null;
+
         const { data, error } = await supabase
             .from("user_data")
-            .upsert({ id: user_id, location, company_name: companyName })
+            .upsert({
+                id: user_id,
+                location,
+                company_name: companyName,
+                coordinates,
+            })
             .select();
 
         if (error) {
@@ -432,28 +464,24 @@ export default function Dashboard() {
                         ) : (
                             <div>
                                 {user_metadata.role === "Manufacturer" && (
-    <div className="bg-white bg-opacity-15 p-4 rounded-md shadow flex gap-4 items-center justify-between">
-        <h2 className="text-lg font-semibold mb-2"> 
-            Enter Expiry Date
-        </h2>
-        <input
-            type="date"
-            placeholder="expiry date"
-            onChange={(e) => {
-                expirydate.current = new Date(e.target.value);
-            }}
-            className="px-3 py-2 text-black rounded w-48"
-        />
-<p className="text-red-900 font-bold text-lg">
-    ⚠️ Products must be registered within 
-    <span className="font-extrabold text-xl"> 10 days </span> of manufacturing!
-</p>
+                                    <div className="bg-white bg-opacity-15 p-4 rounded-md shadow flex gap-4 items-center justify-between">
+                                        <h2 className="text-lg font-semibold mb-2">
+                                            Enter Expiry Date
+                                        </h2>
+                                        <input
+                                            type="date"
+                                            placeholder="expiry date"
+                                            onChange={(e) => {
+                                                expirydate.current = new Date(
+                                                    e.target.value
+                                                );
+                                            }}
+                                            className="px-3 py-2 text-black rounded w-48"
+                                        />
+                                    </div>
+                                )}
 
-    </div>
-)}
-
-
-                      {user_metadata.role === "Distributor" &&
+                                {user_metadata.role === "Distributor" &&
                                 fullUserData.approved === false &&
                                 requestApproval === false ? (
                                     <div>
@@ -469,11 +497,6 @@ export default function Dashboard() {
                                                 Request
                                             </button>
                                         </div>
-                                        <p className="text-red-900 font-bold text-lg mt-2">
-    ⚠️ Distributors must register the product within 
-    <span className="font-extrabold text-xl text-red-900"> 12 days </span> of distribution!
-</p>
-
                                     </div>
                                 ) : (
                                     <div>
@@ -507,6 +530,7 @@ export default function Dashboard() {
                                                 }
                                                 formats={["qr_code"]}
                                                 components={{
+
                                                     zoom: true,
                                                     audio: false,
                                                     finder: false,
