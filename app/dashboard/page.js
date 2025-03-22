@@ -25,6 +25,8 @@ export default function Dashboard() {
     const [done, setDone] = useState(false);
     const [productCode, setProductCode] = useState("");
     const [requestApproval, setRequestApproval] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
+    const [coordinatesMatch, setCoordinatesMatch] = useState(false);
     let expirydate = useRef("");
     const [retailerModal, setRetailerModal] = useState(false);
 
@@ -93,8 +95,27 @@ export default function Dashboard() {
                 return;
             }
 
-            if (user_data && user_data.length > 0 && user_data[0].location) {
-                setLocation(user_data[0].location);
+            if (user_data && user_data.length > 0) {
+                if (user_data[0].location) {
+                    setLocation(user_data[0].location);
+                }
+                
+                // Check if coordinates exist and match current location
+                if (user_data[0].coordinates && coords) {
+                    const storedCoords = user_data[0].coordinates;
+                    const currentCoords = {
+                        latitude: coords.latitude,
+                        longitude: coords.longitude,
+                        accuracy: coords.accuracy
+                    };
+
+                    // Compare coordinates with some tolerance for accuracy
+                    const latMatch = Math.abs(storedCoords.latitude - currentCoords.latitude) < 0.0001;
+                    const lonMatch = Math.abs(storedCoords.longitude - currentCoords.longitude) < 0.0001;
+                    const accMatch = Math.abs(storedCoords.accuracy - currentCoords.accuracy) < 10;
+
+                    setCoordinatesMatch(latMatch && lonMatch && accMatch);
+                }
             } else if (coords && !location) {
                 const { latitude, longitude, accuracy } = coords;
                 const fetchAddress = async () => {
@@ -102,9 +123,22 @@ export default function Dashboard() {
                         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
                     );
                     const data = await response.json();
-                    console.log(data); // Print the location data in table format
+                    console.log(data);
                     if (data && data.address) {
-                        const address = `${data.address.road || ""}, ${data.address.city || ""}, ${data.address.state || ""}, ${data.address.country || ""}`;
+                        // Create an array of address components and filter out empty values
+                        const addressComponents = [
+                            data.address.road,
+                            data.address.suburb,
+                            data.address.neighbourhood,
+                            data.address.city,
+                            data.address.town,
+                            data.address.village,
+                            data.address.state,
+                            data.address.country
+                        ].filter(component => component && component.trim() !== "");
+
+                        // Join the components with commas and spaces
+                        const address = addressComponents.join(", ");
                         setLocation(address);
 
                         // Store the coordinates in the database
@@ -121,6 +155,8 @@ export default function Dashboard() {
 
                         if (updateError) {
                             setError(updateError.message);
+                        } else {
+                            setCoordinatesMatch(true);
                         }
                     } else {
                         setError("Unable to fetch address");
@@ -531,33 +567,61 @@ export default function Dashboard() {
                                 )}
                                 <div className="mt-8 z-10">
                                     <h2 className="text-xl font-bold mb-4">
-                                        Scan QR Code
+                                        QR Code Scanner
                                     </h2>
                                     {!showModal ? (
-                                        <div className="flex justify-center">
-                                            <Scanner
-                                                onScan={handleScan}
-                                                onError={(error) =>
-                                                    console.log(error)
-                                                }
-                                                formats={["qr_code"]}
-                                                components={{
-                                                    zoom: true,
-                                                    audio: false,
-                                                    finder: false,
-                                                }}
-                                                styles={{
-                                                    container: {
-                                                        maxWidth: "100%",
-                                                        margin: "auto",
-                                                        overflow: "hidden",
-                                                        position: "relative",
-                                                    },
-                                                    video: {
-                                                        minWidth: "100lvw",
-                                                    },
-                                                }}
-                                            />
+                                        <div className="flex flex-col items-center gap-4">
+                                            {!coordinatesMatch ? (
+                                                <div className="text-center">
+                                                    <p className="text-red-500 mb-4">Your current location does not match the registered location. Please ensure you are at the correct facility.</p>
+                                                    <div className="text-sm text-gray-300 space-y-1">
+                                                        <p>Current Location:</p>
+                                                        <p>Latitude: {coords ? coords.latitude.toFixed(6) : 'Not available'}</p>
+                                                        <p>Longitude: {coords ? coords.longitude.toFixed(6) : 'Not available'}</p>
+                                                        <p>Accuracy: {coords ? coords.accuracy.toFixed(2) + ' meters' : 'Not available'}</p>
+                                                    </div>
+                                                </div>
+                                            ) : !showScanner ? (
+                                                <button
+                                                    onClick={() => setShowScanner(true)}
+                                                    className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                                                >
+                                                    Start Scanning
+                                                </button>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <button
+                                                        onClick={() => setShowScanner(false)}
+                                                        className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center gap-2"
+                                                    >
+                                                        <X size={20} />
+                                                        Stop Scanning
+                                                    </button>
+                                                    <Scanner
+                                                        onScan={handleScan}
+                                                        onError={(error) =>
+                                                            console.log(error)
+                                                        }
+                                                        formats={["qr_code"]}
+                                                        components={{
+                                                            zoom: true,
+                                                            audio: false,
+                                                            finder: false,
+                                                        }}
+                                                        styles={{
+                                                            container: {
+                                                                maxWidth: "100%",
+                                                                margin: "auto",
+                                                                overflow: "hidden",
+                                                                position: "relative",
+                                                            },
+                                                            video: {
+                                                                minWidth: "100lvw",
+                                                            },
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div></div>
