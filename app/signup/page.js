@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
+import { ArrowLeft } from "lucide-react";
 
 function SignUp() {
    const RoleSelection = {
@@ -52,6 +53,12 @@ function SignUp() {
    return (
       <main className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500">
          <div className="flex flex-col items-center justify-center h-screen">
+            <button
+               onClick={() => router.push("/")}
+               className="absolute top-4 left-4 text-white"
+            >
+               <ArrowLeft size={24} />
+            </button>
             <div className="bg-white bg-opacity-15 p-8 rounded-md shadow w-7/12">
                <h1 className="text-2xl font-bold text-white">Register Now!</h1>
                <p className="text-stone-200 mb-4 text-sm font-light">
