@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroui/react": "^2.7.5",
     "@nextui-org/modal": "^2.0.40",
     "@nextui-org/theme": "^2.4.5",
     "@radix-ui/react-slot": "^1.1.0",
@@ -16,7 +17,7 @@
     "@supabase/supabase-js": "^2.45.3",
     "@yudiel/react-qr-scanner": "^2.0.8",
     "express": "^4.19.2",
-    "framer-motion": "^11.5.4",
+    "framer-motion": "^11.18.2",
     "geolib": "^3.3.4",
     "lucide-react": "^0.441.0",
     "next": "14.2.6",

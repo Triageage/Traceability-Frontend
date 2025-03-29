@@ -26,6 +26,7 @@ export default function Home() {
    });
 
    const getUserLocation = () => {
+      console.log(coords)
       if (coords) {
          console.log(coords);
          console.log(coords.latitude);
@@ -33,7 +34,7 @@ export default function Home() {
 
          const result = isPointWithinRadius(
             {latitude: coords.latitude, longitude: coords.longitude},
-            {latitude: 13.1359186, longitude: 80.2356058},
+            // {latitude: 13.1359186, longitude: 80.2356058},
             coords.accuracy
          )
 
