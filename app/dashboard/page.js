@@ -12,6 +12,9 @@ import { CustomModal } from "@/components/custom-modal";
 import { CustomTable } from "@/components/custom-table";
 import { useRetailerWithDistributor } from "@/custom-hook/useRetailerWithDistributor";
 import CustomTextBoxWithButton from "@/components/custom-textbox-with-button";
+import { user } from "@heroui/react";
+import BarcodeScannerComponent from "react-qr-barcode-scanner";
+import { useMemo } from "react";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -34,9 +37,17 @@ export default function Dashboard() {
   let expirydate = useRef("");
   const [retailerModal, setRetailerModal] = useState(false);
   const [retailerDetails, setRetailerDetails] = useState();
-  const [retailPartnerIds, setRetailPartnerIds] = useState();
 
-  const distributor = "8d5e546e-dc8f-49c3-9da1-d88d97334d65";
+  // let distributor = "8d5e546e-dc8f-49c3-9da1-d88d97334d65";
+  //
+  const facilityCode = useMemo(
+    () => fullUserData.facility_code,
+    [fullUserData.facility_code],
+  );
+
+  const handleToggleRetailerModal = () => {
+    setRetailerModal((prev) => !prev); // Correctly toggle the state
+  };
 
   const { coords, isGeolocationAvailable, isGeolocationEnabled } =
     useGeolocated({
@@ -53,32 +64,34 @@ export default function Dashboard() {
         .select("*")
         .eq("id", user_id);
 
-      let { data: approval_data, error: approval_error } = await supabase
-        .from("approval_data")
-        .select("*")
-        .eq("id", user_id);
-
       if (error) {
         setError(error.message);
         return;
       }
 
-      if (approval_error) {
-        setError(approval_error.message);
-        return;
-      }
-
-      if (approval_data.length === 1) {
-        setRequestApproval(true);
-      }
-
       if (user_data && user_data.length > 0) {
+        // **Moved the approval_data fetch inside this block**
         setLocation(user_data[0].location || "");
         setCompanyName(user_data[0].company_name || "");
         if (!user_data[0].location || !user_data[0].company_name) {
           setShowModal(true);
         }
         setFullUserData(user_data[0]);
+
+        // Now fetch approval_data using the facility_code *after* user_data is available
+        const { data: approval_data, error: approval_error } = await supabase
+          .from("approval_data")
+          .select("*")
+          .eq("id", user_data[0].facility_code); // Access facility_code from user_data[0]
+
+        if (approval_error) {
+          setError(approval_error.message);
+          return;
+        }
+
+        if (approval_data.length === 1) {
+          setRequestApproval(true);
+        }
       } else {
         setShowModal(true);
       }
@@ -180,22 +193,23 @@ export default function Dashboard() {
     }
   }, [coords, location, user_id]);
 
-  let { retailerDetails: retDet, retailPartnerIds: retIds } =
-    useRetailerWithDistributor(distributor, retailPartnerIds);
-
+  // if (user_metadata.role === "Distributor") {
+  //   let { retailerDetails: retDet, retailPartnerIds: retIds } =
+  //     useRetailerWithDistributor(fullUserData.facility_code, retailPartnerIds);
+  // }
   // useEffect(()=>{
   //     console.log("Initial setup");
   //     setRetailPartnerIds(retIds);
   //     setRetailerDetails(retDet);
   // }, []);
 
-  useEffect(() => {
-    console.log("pre data store: ", retDet, retIds);
-    setRetailerDetails(retDet);
-    setRetailPartnerIds(retIds);
+  // useEffect(() => {
+  //   console.log("pre data store: ", retDet, retIds);
+  //   setRetailerDetails(retDet);
+  //   setRetailPartnerIds(retIds);
 
-    console.log("inside useeffect: ", retailPartnerIds, retailerDetails);
-  }, [retailPartnerIds, retailerDetails]);
+  //   console.log("inside useeffect: ", retailPartnerIds, retailerDetails);
+  // }, [retailPartnerIds, retailerDetails]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -244,7 +258,7 @@ export default function Dashboard() {
 
     let data = {
       productName: productName,
-      details: JSON.stringify({
+      ingredientDetails: JSON.stringify({
         ingredients: ingredients,
         companyName: companyName,
         location: location,
@@ -253,11 +267,12 @@ export default function Dashboard() {
 
     const url = "http://localhost:5000/api/create";
 
-    console.log(JSON.stringify(data));
+    console.log("Data: ", JSON.stringify(data));
 
     let response, final;
+    let count = 0;
 
-    while (true) {
+    while (count < 3) {
       response = await fetch(url, {
         method: "POST",
         headers: {
@@ -271,6 +286,7 @@ export default function Dashboard() {
         break;
       } else {
         console.log("Failed, Retrying...");
+        count++;
       }
     }
 
@@ -284,8 +300,10 @@ export default function Dashboard() {
 
   const handleScan = async (result) => {
     if (result && companyName && location) {
-      console.log("Scanned code:", result[0].rawValue);
-      setScannedCode(result[0].rawValue);
+      // console.log("Scanned code:", result[0].rawValue);
+      // setScannedCode(result[0].rawValue);
+      console.log("scanned code: ", result);
+      const code = result;
       const url = "http://localhost:5000/api/update";
 
       let data = {};
@@ -294,8 +312,16 @@ export default function Dashboard() {
         data.expiryDate = expirydate.current.valueOf().toString();
       }
 
+      if (user_metadata.role === "Distributor") {
+        data.distributorCode = facilityCode;
+      }
+
+      if (user_metadata.role === "Retailer") {
+        data.retailerCode = facilityCode;
+      }
+
       data.producerDetails = user_metadata.role;
-      data.productCode = result[0].rawValue;
+      data.productCode = result;
       data.facilityDetails = JSON.stringify({
         companyName: companyName,
         location: location,
@@ -304,8 +330,9 @@ export default function Dashboard() {
       console.log(JSON.stringify(data));
 
       setLoading(true);
+      let count = 0;
 
-      while (true) {
+      while (count < 3) {
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -319,6 +346,7 @@ export default function Dashboard() {
           break;
         } else {
           console.log("Failed, Retrying...");
+          count++;
         }
       }
 
@@ -334,7 +362,7 @@ export default function Dashboard() {
 
     const { _, error } = await supabase
       .from("approval_data")
-      .insert([{ id: fullUserData.id }])
+      .insert([{ id: facilityCode }])
       .select();
 
     if (error) {
@@ -394,14 +422,15 @@ export default function Dashboard() {
           <div className="flex flex-col gap-5">
             <div className="flex justify-between">
               <h1 className="text-2xl font-bold">Dashboard</h1>
-              {fullUserData.approved && (
-                <button
-                  onClick={setRetailerModal}
-                  className="bg-cyan-500 text-white px-4 py-2 rounded font-semibold"
-                >
-                  Add Retailer
-                </button>
-              )}
+              {fullUserData.approved &&
+                user_metadata.role === "Distributor" && (
+                  <button
+                    onClick={handleToggleRetailerModal}
+                    className="bg-cyan-500 text-white px-4 py-2 rounded font-semibold"
+                  >
+                    Add Retailer
+                  </button>
+                )}
             </div>
 
             <div className="grid sm:grid-cols-2 gap-5">
@@ -420,14 +449,18 @@ export default function Dashboard() {
                 <p className="text-xl font-semibold">Company Name</p>
                 <p className="text-md font-medium flex gap-3 items-center justify-between">
                   <span>{companyName}</span>{" "}
-                  {fullUserData.approved ? (
-                    <span className="bg-green-500 text-white px-1 rounded text-[10px]">
-                      Approved!
-                    </span>
-                  ) : (
-                    <span className="bg-red-500 text-white px-1 rounded text-[10px]">
-                      Not Approved!
-                    </span>
+                  {user_metadata.role === "Distributor" && (
+                    <div>
+                      {fullUserData.approved ? (
+                        <span className="bg-green-500 text-white px-1 rounded text-[10px]">
+                          Approved!
+                        </span>
+                      ) : (
+                        <span className="bg-red-500 text-white px-1 rounded text-[10px]">
+                          Not Approved!
+                        </span>
+                      )}
+                    </div>
                   )}
                 </p>
               </div>
@@ -436,6 +469,12 @@ export default function Dashboard() {
                 <p className="text-md font-medium">{location}</p>
               </div>
             </div>
+            {user_metadata.role === "Retailer" && (
+              <div className="flex flex-col gap-1 bg-white bg-opacity-20 p-4 rounded-md shadow">
+                <p className="text-xl font-semibold">Retailer Code</p>
+                <p className="text-md font-medium">{facilityCode}</p>
+              </div>
+            )}
             {error && <p className="text-red-500">Error: {error}</p>}
 
             {user_metadata.role === "Aggregator" ? (
@@ -596,14 +635,24 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ) : !showScanner ? (
-                        <button
-                          onClick={() => setShowScanner(true)}
-                          className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                        >
-                          Start Scanning
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              if (user_metadata.role === "Manufacturer") {
+                                if (expirydate.current !== "")
+                                  setShowScanner(true);
+                                else alert("Please enter expiry date");
+                              } else {
+                                setShowScanner(true);
+                              }
+                            }}
+                            className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                          >
+                            Start Scanning
+                          </button>
+                        </>
                       ) : (
-                        <div className="flex flex-col items-center gap-4">
+                        <div className="flex flex-col items-center gap-4 w-3/4">
                           <button
                             onClick={() => setShowScanner(false)}
                             className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center gap-2"
@@ -611,12 +660,12 @@ export default function Dashboard() {
                             <X size={20} />
                             Stop Scanning
                           </button>
-                          <Scanner
+                          {/* <Scanner
                             onScan={handleScan}
                             onError={(error) => console.log(error)}
                             formats={["qr_code"]}
                             components={{
-                              zoom: true,
+                              zoom: false,
                               audio: false,
                               finder: false,
                             }}
@@ -630,6 +679,15 @@ export default function Dashboard() {
                               video: {
                                 minWidth: "100lvw",
                               },
+                            }}
+                          /> */}
+                          <BarcodeScannerComponent
+                            width={"80%"}
+                            height={"50%"}
+                            delay={3000}
+                            onUpdate={(err, result) => {
+                              if (result) handleScan(result.text);
+                              // else setData("Not Found");
                             }}
                           />
                         </div>
@@ -693,26 +751,23 @@ export default function Dashboard() {
           </div>
         )}
 
-        <CustomModal
-          openModal={retailerModal}
-          subComponent={
-            <div className="flex flex-col gap-y-7">
-              <CustomTable
-                details={retDet}
-                distributorId={distributor}
-                setIds={setRetailPartnerIds}
-              />
-              <p className="text-lg font-semibold">Add new retailer</p>
-              <CustomTextBoxWithButton
-                partnerIds={retIds}
-                distributorId={distributor}
-                setRetailPartnerIds={setRetailPartnerIds}
-                label={"Facility Code"}
-              />
-            </div>
-          }
-          heading={"Retail Partners"}
-        />
+        {user_metadata.role === "Distributor" && (
+          <CustomModal
+            openModal={retailerModal}
+            onClose={handleToggleRetailerModal}
+            subComponent={
+              <div className="flex flex-col gap-y-7">
+                <CustomTable distributorId={facilityCode} />
+                <p className="text-lg font-semibold">Add new retailer</p>
+                <CustomTextBoxWithButton
+                  distributorId={facilityCode}
+                  label={"Facility Code"}
+                />
+              </div>
+            }
+            heading={"Retail Partners"}
+          />
+        )}
       </div>
     </main>
   );

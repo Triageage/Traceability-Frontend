@@ -1,19 +1,18 @@
+import { useRetailerWithDistributor } from "@/custom-hook/useRetailerWithDistributor";
 import { supabase } from "@/utils/supabaseClient";
 import { Button, Input } from "@heroui/react";
 import { useState } from "react";
 
-export default function CustomTextBoxWithButton({
-  partnerIds,
-  distributorId,
-  setRetailPartnerIds,
-  label,
-}) {
+export default function CustomTextBoxWithButton({ distributorId, label }) {
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Access retailerDetails and retailPartnerIds from the hook
+  const { retailerDetails, retailPartnerIds, setRetailPartnerIds } =
+    useRetailerWithDistributor(distributorId);
   async function onPress() {
     setLoading(true);
-
+    console.log("distributorId:", distributorId, " retailerId:", value);
     try {
       const response = await fetch("http://localhost:5000/api/add/retailer", {
         method: "POST",
@@ -27,29 +26,19 @@ export default function CustomTextBoxWithButton({
       });
 
       const data = await response.json();
-      if (response.ok) {
-        partnerIds.push(value);
 
-        const { data: supData, error: supError } = await supabase
-          .from("retail_partners")
-          .update({ retailer_ids: partnerIds })
-          .eq("distributor_id", distributorId)
-          .select();
-        if (!supError) {
-          console.log(
-            "inserted successfully!, data: ",
-            supData[0].retailer_ids,
-          );
-          setRetailPartnerIds(supData[0].retailer_ids);
-          setValue("");
-        } else {
-          console.log("failed");
-        }
+      if (response.ok) {
+        // Assuming the backend returns the *updated* list of retailer_ids
+
+        await setRetailPartnerIds(distributorId); // Update the parent's state
+        setValue(""); // Clear the input
       } else {
-        console.log("failed to add retailer: ", data.error);
+        console.error("API add retailer failed:", data.error);
+        // Handle API error (e.g., show an error message)
       }
     } catch (error) {
-      console.log("Error adding retailer: ", error);
+      console.error("Error adding retailer:", error);
+      // Handle network or other errors
     } finally {
       setLoading(false);
     }

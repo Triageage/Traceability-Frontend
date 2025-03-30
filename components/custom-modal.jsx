@@ -9,16 +9,10 @@ import {
   useDisclosure,
 } from "@heroui/react";
 
-export function CustomModal({ openModal, subComponent, heading }) {
-  let { isOpen, onOpen, onClose } = useDisclosure();
-
-  useEffect(() => {
-    if (openModal) onOpen();
-  }, [openModal]);
-
+export function CustomModal({ openModal, subComponent, heading, onClose }) {
   return (
     <>
-      <Modal isOpen={isOpen} size="3xl" onClose={onClose} backdrop="blur">
+      <Modal isOpen={openModal} size="3xl" onClose={onClose} backdrop="blur">
         <ModalContent>
           {(onClose) => (
             <>

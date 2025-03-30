@@ -1,3 +1,4 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import {
   Button,
@@ -10,43 +11,28 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
 import CustomSpinner from "./custom-spinner";
+import { useRetailerWithDistributor } from "@/custom-hook/useRetailerWithDistributor";
 
-export function CustomTable({ details, distributorId, setIds }) {
+function CustomTableComponent({ distributorId }) {
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
-  const [data, setData] = useState(details); // Manage state for deletion
   const [loading, setLoading] = useState(false);
-  const [pages, setPages] = useState(1); // Use state for pages
+  const { retailerDetails, retailPartnerIds, setRetailPartnerIds } =
+    useRetailerWithDistributor(distributorId);
 
-  console.log("details from the DB: ", details);
+  const data = useMemo(() => retailerDetails, [retailerDetails]);
 
-  useEffect(() => {
-    setData(details);
-    setLoading(false); // Ensure loading is set to false on initial data load or updates
-  }, [details]);
-
-  useEffect(() => {
-    // Calculate pages whenever data changes
-    setPages(Math.ceil(data.length / rowsPerPage));
-    // Reset page to 1 when data changes, especially when deleting
-    setPage(1);
-  }, [data, rowsPerPage]);
+  const pages = useMemo(
+    () => Math.ceil(data.length / rowsPerPage),
+    [data.length, rowsPerPage],
+  );
 
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     return data.slice(start, end);
-  }, [page, data, rowsPerPage]); // Add rowsPerPage as a dependency
-
-  console.log("items: ", items);
+  }, [page, data, rowsPerPage]);
 
   const retailerCodes = useMemo(() => {
     return data.map((item) => item.facility_code);
@@ -54,6 +40,8 @@ export function CustomTable({ details, distributorId, setIds }) {
 
   const removeRetailer = useCallback(
     async (id) => {
+      setLoading(true); // Set loading here
+
       const updatedRetailerCodes = retailerCodes.filter((code) => code !== id);
 
       try {
@@ -74,38 +62,35 @@ export function CustomTable({ details, distributorId, setIds }) {
         const data = await response.json();
 
         if (response.ok) {
-          const { error } = await supabase
-            .from("retail_partners")
-            .update({ retailer_ids: updatedRetailerCodes })
-            .eq("distributor_id", distributorId);
+          // const { error } = await supabase
+          //   .from("retail_partners")
+          //   .update({ retailer_ids: updatedRetailerCodes })
+          //   .eq("distributor_id", distributorId);
 
-          if (error) {
-            console.error("Error deleting retailer:", error);
-            // Handle error (e.g., show an error message)
-          } else {
-            console.log("Update success");
-          }
-          setIds(updatedRetailerCodes);
+          // if (error) {
+          //   console.error("Error deleting retailer:", error);
+          // } else {
+          //   console.log("Update success");
+          // }
+          setRetailPartnerIds(updatedRetailerCodes);
         } else {
           console.error("Error deleting retailer:", data.error);
         }
       } finally {
-        setLoading(false);
+        setLoading(false); // Ensure loading is set to false regardless of success or failure
       }
     },
-    [distributorId, setIds, retailerCodes],
-  ); // Include all dependencies
+    [distributorId, setRetailPartnerIds, retailerCodes],
+  );
 
   const handleDelete = useCallback(
     async (id) => {
-      setLoading(true);
-      setData((prevData) =>
-        prevData.filter((item) => item.facility_code !== id),
-      );
       await removeRetailer(id);
     },
     [removeRetailer],
   );
+
+  console.log("CustomTable re-rendered!");
 
   return (
     <>
@@ -161,3 +146,5 @@ export function CustomTable({ details, distributorId, setIds }) {
     </>
   );
 }
+
+export const CustomTable = React.memo(CustomTableComponent);
