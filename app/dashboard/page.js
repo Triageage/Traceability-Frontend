@@ -3,18 +3,19 @@
 import Navbar from "@/components/navbar";
 import { supabase } from "@/utils/supabaseClient";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
-import { X, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft, Copy } from "lucide-react";
 import { useGeolocated } from "react-geolocated";
 import { getDistance, getPreciseDistance } from "geolib";
 import { CustomModal } from "@/components/custom-modal";
 import { CustomTable } from "@/components/custom-table";
 import { useRetailerWithDistributor } from "@/custom-hook/useRetailerWithDistributor";
 import CustomTextBoxWithButton from "@/components/custom-textbox-with-button";
-import { user } from "@heroui/react";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 import { useMemo } from "react";
+//import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -34,6 +35,8 @@ export default function Dashboard() {
   const [requestApproval, setRequestApproval] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [coordinatesMatch, setCoordinatesMatch] = useState(false);
+  const [productCodeButtonText, setProductCodeButtonText] = useState("Copy Product Code");
+  const [qrCodeButtonText, setQrCodeButtonText] = useState("Copy QR Code");
   let expirydate = useRef("");
   const [retailerModal, setRetailerModal] = useState(false);
   const [retailerDetails, setRetailerDetails] = useState();
@@ -386,9 +389,92 @@ export default function Dashboard() {
 
         {productCode && (
           <div className="bg-green-200 p-3 mb-5 w-full rounded-md">
-            <p className="text-lg font-semibold text-center break-words text-green-700">
-              Product Code: {productCode}
-            </p>
+            <div className="flex flex-col items-center">
+              <p className="text-lg font-semibold text-center break-words text-green-700">
+                Product Code: {productCode}
+              </p>
+              <div id="qr-code-container" className="bg-white p-2 rounded-lg mt-4 w-[220px] h-[220px] flex items-center justify-center">
+                <QRCodeSVG
+                  value={productCode.toString()}
+                  size={200}
+                  level="H"
+                  margin={10}
+                />
+              </div>
+              <p className="text-sm text-green-700 mt-2">Scan this QR code to update product details</p>
+              <div className="flex gap-2 justify-center mt-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(productCode);
+                      setError("Product code copied to clipboard!");
+                      setProductCodeButtonText("Copied!");
+                      setTimeout(() => {
+                        setError(null);
+                        setProductCodeButtonText("Copy Product Code");
+                      }, 2000);
+                    } catch (error) {
+                      console.error('Failed to copy product code:', error);
+                      setError("Failed to copy product code. Please try again.");
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+                >
+                  <Copy size={16} />
+                  {productCodeButtonText}
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const qrElement = document.getElementById('qr-code-container').querySelector('svg');
+                      const canvas = document.createElement('canvas');
+                      const ctx = canvas.getContext('2d');
+                      
+                      // Set canvas size with padding
+                      const padding = 10;
+                      canvas.width = 200 + (padding * 2);
+                      canvas.height = 200 + (padding * 2);
+                      
+                      // Convert SVG to image
+                      const svgData = new XMLSerializer().serializeToString(qrElement);
+                      const img = new Image();
+                      
+                      img.onload = async () => {
+                        // Draw white background
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Draw QR code with padding
+                        ctx.drawImage(img, padding, padding);
+                        
+                        // Convert to blob and copy to clipboard
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        const clipboardItem = new ClipboardItem({
+                          'image/png': blob
+                        });
+                        await navigator.clipboard.write([clipboardItem]);
+                        
+                        setError("QR code copied to clipboard!");
+                        setQrCodeButtonText("Copied!");
+                        setTimeout(() => {
+                          setError(null);
+                          setQrCodeButtonText("Copy QR Code");
+                        }, 2000);
+                      };
+                      
+                      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                    } catch (error) {
+                      console.error('Failed to copy QR code:', error);
+                      setError("Failed to copy QR code. Please try again.");
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                >
+                  <Copy size={16} />
+                  {qrCodeButtonText}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -471,8 +557,89 @@ export default function Dashboard() {
             </div>
             {user_metadata.role === "Retailer" && (
               <div className="flex flex-col gap-1 bg-white bg-opacity-20 p-4 rounded-md shadow">
-                <p className="text-xl font-semibold">Retailer Code</p>
-                <p className="text-md font-medium">{facilityCode}</p>
+                <div className="flex flex-col items-center">
+                  <p className="text-xl font-semibold">Retailer Code</p>
+                  <p className="text-md font-medium text-center mt-2">{facilityCode}</p>
+                  {facilityCode && (
+                    <div id="retailer-qr-container" className="bg-white p-2 rounded-lg mt-4 w-[220px] h-[220px] flex items-center justify-center">
+                      <QRCodeSVG
+                        value={facilityCode.toString()}
+                        size={200}
+                        level="H"
+                        margin={10}
+                      />
+                    </div>
+                  )}
+                  <p className="text-base font-medium text-white mt-3 text-center">Scan this QR code to share your retailer code</p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(facilityCode);
+                          setProductCodeButtonText("Copied!");
+                          setTimeout(() => {
+                            setProductCodeButtonText("Copy Retailer Code");
+                          }, 2000);
+                        } catch (error) {
+                          console.error('Failed to copy retailer code:', error);
+                          setError("Failed to copy retailer code. Please try again.");
+                        }
+                      }}
+                      className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+                    >
+                      <Copy size={16} />
+                      {productCodeButtonText}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const qrElement = document.getElementById('retailer-qr-container').querySelector('svg');
+                          const canvas = document.createElement('canvas');
+                          const ctx = canvas.getContext('2d');
+                          
+                          // Set canvas size with padding
+                          const padding = 10;
+                          canvas.width = 220;
+                          canvas.height = 220;
+                          
+                          // Convert SVG to image
+                          const svgData = new XMLSerializer().serializeToString(qrElement);
+                          const img = new Image();
+                          
+                          img.onload = async () => {
+                            // Draw white background
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            
+                            // Draw QR code with padding
+                            ctx.drawImage(img, padding, padding);
+                            
+                            // Convert to blob and copy to clipboard
+                            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                            const clipboardItem = new ClipboardItem({
+                              'image/png': blob
+                            });
+                            await navigator.clipboard.write([clipboardItem]);
+                            
+                            setQrCodeButtonText("Copied!");
+                            setTimeout(() => {
+                              setQrCodeButtonText("Copy QR Code");
+                            }, 2000);
+                          };
+                          
+                          img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                        } catch (error) {
+                          console.error('Failed to copy QR code:', error);
+                          setError("Failed to copy QR code. Please try again.");
+                        }
+                      }}
+                      className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                    >
+                      <Copy size={16} />
+                      {qrCodeButtonText}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
             {error && <p className="text-red-500">Error: {error}</p>}
