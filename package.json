@@ -21,10 +21,12 @@
     "geolib": "^3.3.4",
     "lucide-react": "^0.441.0",
     "next": "14.2.6",
+    "qrcode.react": "^4.2.0",
     "react": "^18",
     "react-dom": "^18",
     "react-geolocated": "^4.3.0",
     "react-qr-barcode-scanner": "^2.0.0",
+    "react-qr-code": "^2.0.15",
     "supabase": "^1.190.0"
   },
   "devDependencies": {
