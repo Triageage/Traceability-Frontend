@@ -40,6 +40,26 @@ export default function Dashboard() {
   let expirydate = useRef("");
   const [retailerModal, setRetailerModal] = useState(false);
   const [retailerDetails, setRetailerDetails] = useState();
+  const [lastScannedCode, setLastScannedCode] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  /**
+   * Formats time difference into days, hours, and minutes
+   * @param {number} seconds - Time difference in seconds
+   * @returns {string} Formatted time string
+   */
+  const formatTimeDifference = (seconds) => {
+    const days = Math.floor(seconds / (24 * 60 * 60));
+    const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((seconds % (60 * 60)) / 60);
+    
+    let timeString = '';
+    if (days > 0) timeString += `${days} day${days !== 1 ? 's' : ''} `;
+    if (hours > 0) timeString += `${hours} hour${hours !== 1 ? 's' : ''} `;
+    if (minutes > 0) timeString += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    
+    return timeString.trim();
+  };
 
   // let distributor = "8d5e546e-dc8f-49c3-9da1-d88d97334d65";
   //
@@ -302,61 +322,76 @@ export default function Dashboard() {
   };
 
   const handleScan = async (result) => {
-    if (result && companyName && location) {
-      // console.log("Scanned code:", result[0].rawValue);
-      // setScannedCode(result[0].rawValue);
-      console.log("scanned code: ", result);
-      const code = result;
-      const url = "http://localhost:5000/api/update";
+    if (!result || !companyName || !location || isProcessing || result === lastScannedCode) {
+      return; // Prevent duplicate scans or processing while another scan is in progress
+    }
 
-      let data = {};
+    setIsProcessing(true);
+    setLastScannedCode(result);
+    console.log("Scanned code: ", result);
+    const code = result;
+    const url = "http://localhost:5000/api/update";
 
-      if (user_metadata.role === "Manufacturer" && expirydate.current) {
-        data.expiryDate = expirydate.current.valueOf().toString();
-      }
+    let data = {};
 
-      if (user_metadata.role === "Distributor") {
-        data.distributorCode = facilityCode;
-      }
+    if (user_metadata.role === "Manufacturer" && expirydate.current) {
+      // Convert the date to a timestamp in seconds
+      const expiryTimestamp = Math.floor(expirydate.current.getTime() / 1000);
+      data.expiryDate = expiryTimestamp;
+    }
 
-      if (user_metadata.role === "Retailer") {
-        data.retailerCode = facilityCode;
-      }
+    if (user_metadata.role === "Distributor") {
+      data.distributorCode = facilityCode;
+    }
 
-      data.producerDetails = user_metadata.role;
-      data.productCode = result;
-      data.facilityDetails = JSON.stringify({
-        companyName: companyName,
-        location: location,
+    if (user_metadata.role === "Retailer") {
+      data.retailerCode = facilityCode;
+    }
+
+    data.producerDetails = user_metadata.role;
+    data.productCode = result;
+    data.facilityDetails = JSON.stringify({
+      companyName: companyName,
+      location: location,
+    });
+
+    console.log("Sending update request:", JSON.stringify(data));
+    setLoading(true);
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
+      const final = await response.json();
 
-      console.log(JSON.stringify(data));
-
-      setLoading(true);
-      let count = 0;
-
-      while (count < 3) {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
-        const final = await response.json();
-
-        if (response.status === 200) {
-          break;
-        } else {
-          console.log("Failed, Retrying...");
-          count++;
-        }
+      if (response.status === 200) {
+        setDone(true);
+        setError(null);
+        console.log("Update successful:", final);
+      } else {
+        // Handle error responses
+        const errorMessage = final.error;
+        const errorDetails = final.details;
+        
+        setError(`${errorMessage}: ${errorDetails}`);
+        setDone(false);
       }
-
+    } catch (error) {
+      console.error("Network error:", error);
+      setError("Network error: Unable to connect to server");
+      setDone(false);
+    } finally {
       setLoading(false);
-      setDone(true);
-
-      console.log("done");
+      setShowScanner(false);
+      // Reset processing state after a delay to prevent immediate rescans
+      setTimeout(() => {
+        setIsProcessing(false);
+        setLastScannedCode("");
+      }, 2000); // 2 second cooldown before allowing new scans
     }
   };
 
