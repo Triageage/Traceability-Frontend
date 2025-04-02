@@ -15,13 +15,10 @@ export function useRetailerWithDistributor(distributorId) {
       .single(); // Expecting only one record
 
     if (error) {
-      if (error.code === 'PGRST116') { // No rows returned
-        setRetailPartnerIds([]); // Set to empty array if no data
-      } else {
-        console.error("Error fetching retailer IDs:", error);
-      }
+      console.error("Error fetching retailer IDs:", error);
     } else if (retailer) {
-      setRetailPartnerIds(retailer.retailer_ids || []);
+      console.log("retailer fetching: ", retailer.retailer_ids);
+      setRetailPartnerIds(retailer.retailer_ids);
     }
   }, [distributorId]);
 
@@ -36,31 +33,19 @@ export function useRetailerWithDistributor(distributorId) {
         .eq("distributor_id", distributorId)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching retailer IDs:", fetchError);
       }
 
       if (existingRecord) {
         // Record exists, update it
-        const updatedIds = [...new Set([...existingRecord.retailer_ids, retailerId])];
+        const updatedIds = [...existingRecord.retailer_ids, retailerId];
         const { error: updateError } = await supabase
           .from("retail_partners")
           .update({ retailer_ids: updatedIds })
           .eq("distributor_id", distributorId);
 
         if (updateError) throw updateError;
-      } else {
-        // No record exists, create new one
-        const { error: insertError } = await supabase
-          .from("retail_partners")
-          .insert([
-            {
-              distributor_id: distributorId,
-              retailer_ids: [retailerId]
-            }
-          ]);
-
-        if (insertError) throw insertError;
       }
 
       // Refresh the retailer IDs list
@@ -87,7 +72,8 @@ export function useRetailerWithDistributor(distributorId) {
         if (error) {
           console.error("Error fetching retailer data:", error);
         } else {
-          setRetailerDetails(retailerData || []); // Ensure it's an array
+          console.log("Retailer data fetched:", retailerData);
+          setRetailerDetails(retailerData); // Ensure it's an array
         }
       } else {
         setRetailerDetails([]); // Set to empty array if no retailer IDs

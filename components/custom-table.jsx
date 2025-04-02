@@ -14,14 +14,23 @@ import {
 import CustomSpinner from "./custom-spinner";
 import { useRetailerWithDistributor } from "@/custom-hook/useRetailerWithDistributor";
 
-function CustomTableComponent({ distributorId }) {
+function CustomTableComponent({
+  distributorId,
+  retailerDetails,
+  onRetailerRemoved,
+}) {
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
   const [loading, setLoading] = useState(false);
-  const { retailerDetails, retailPartnerIds, setRetailPartnerIds } =
-    useRetailerWithDistributor(distributorId);
 
-  const data = useMemo(() => retailerDetails, [retailerDetails]);
+  const data = useMemo(() => {
+    console.log("Retailer data fetched:", retailerDetails);
+    return retailerDetails;
+  }, [retailerDetails]);
+
+  useEffect(() => {
+    console.log("Retailer data fetched:", retailerDetails);
+  }, [retailerDetails]);
 
   const pages = useMemo(
     () => Math.ceil(data.length / rowsPerPage),
@@ -42,7 +51,9 @@ function CustomTableComponent({ distributorId }) {
     async (id) => {
       setLoading(true); // Set loading here
 
-      const updatedRetailerCodes = retailerCodes.filter((code) => code !== id);
+      const updatedRetailerCodes = data
+        .map((item) => item.facility_code)
+        .filter((code) => code !== id);
 
       try {
         const response = await fetch(
@@ -62,17 +73,19 @@ function CustomTableComponent({ distributorId }) {
         const data = await response.json();
 
         if (response.ok) {
-          // const { error } = await supabase
-          //   .from("retail_partners")
-          //   .update({ retailer_ids: updatedRetailerCodes })
-          //   .eq("distributor_id", distributorId);
+          const { error } = await supabase
+            .from("retail_partners")
+            .update({ retailer_ids: updatedRetailerCodes })
+            .eq("distributor_id", distributorId);
 
-          // if (error) {
-          //   console.error("Error deleting retailer:", error);
-          // } else {
-          //   console.log("Update success");
-          // }
-          setRetailPartnerIds(updatedRetailerCodes);
+          if (error) {
+            console.error("Error deleting retailer:", error);
+          } else {
+            console.log("Update success");
+          }
+          if (onRetailerRemoved) {
+            onRetailerRemoved(updatedRetailerCodes);
+          }
         } else {
           console.error("Error deleting retailer:", data.error);
         }
@@ -80,7 +93,7 @@ function CustomTableComponent({ distributorId }) {
         setLoading(false); // Ensure loading is set to false regardless of success or failure
       }
     },
-    [distributorId, setRetailPartnerIds, retailerCodes],
+    [distributorId, data, onRetailerRemoved],
   );
 
   const handleDelete = useCallback(
@@ -147,4 +160,4 @@ function CustomTableComponent({ distributorId }) {
   );
 }
 
-export const CustomTable = React.memo(CustomTableComponent);
+export const CustomTable = CustomTableComponent;

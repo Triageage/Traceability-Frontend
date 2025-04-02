@@ -35,11 +35,11 @@ export default function Dashboard() {
   const [requestApproval, setRequestApproval] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [coordinatesMatch, setCoordinatesMatch] = useState(false);
-  const [productCodeButtonText, setProductCodeButtonText] = useState("Copy Product Code");
+  const [productCodeButtonText, setProductCodeButtonText] =
+    useState("Copy Product Code");
   const [qrCodeButtonText, setQrCodeButtonText] = useState("Copy QR Code");
   let expirydate = useRef("");
   const [retailerModal, setRetailerModal] = useState(false);
-  const [retailerDetails, setRetailerDetails] = useState();
   const [lastScannedCode, setLastScannedCode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -52,12 +52,13 @@ export default function Dashboard() {
     const days = Math.floor(seconds / (24 * 60 * 60));
     const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
     const minutes = Math.floor((seconds % (60 * 60)) / 60);
-    
-    let timeString = '';
-    if (days > 0) timeString += `${days} day${days !== 1 ? 's' : ''} `;
-    if (hours > 0) timeString += `${hours} hour${hours !== 1 ? 's' : ''} `;
-    if (minutes > 0) timeString += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-    
+
+    let timeString = "";
+    if (days > 0) timeString += `${days} day${days !== 1 ? "s" : ""} `;
+    if (hours > 0) timeString += `${hours} hour${hours !== 1 ? "s" : ""} `;
+    if (minutes > 0)
+      timeString += `${minutes} minute${minutes !== 1 ? "s" : ""}`;
+
     return timeString.trim();
   };
 
@@ -216,6 +217,9 @@ export default function Dashboard() {
     }
   }, [coords, location, user_id]);
 
+  const { retailerDetails, retailPartnerIds, setRetailPartnerIds } =
+    useRetailerWithDistributor(facilityCode);
+
   // if (user_metadata.role === "Distributor") {
   //   let { retailerDetails: retDet, retailPartnerIds: retIds } =
   //     useRetailerWithDistributor(fullUserData.facility_code, retailPartnerIds);
@@ -322,7 +326,13 @@ export default function Dashboard() {
   };
 
   const handleScan = async (result) => {
-    if (!result || !companyName || !location || isProcessing || result === lastScannedCode) {
+    if (
+      !result ||
+      !companyName ||
+      !location ||
+      isProcessing ||
+      result === lastScannedCode
+    ) {
       return; // Prevent duplicate scans or processing while another scan is in progress
     }
 
@@ -376,7 +386,7 @@ export default function Dashboard() {
         // Handle error responses
         const errorMessage = final.error;
         const errorDetails = final.details;
-        
+
         setError(`${errorMessage}: ${errorDetails}`);
         setDone(false);
       }
@@ -428,7 +438,10 @@ export default function Dashboard() {
               <p className="text-lg font-semibold text-center break-words text-green-700">
                 Product Code: {productCode}
               </p>
-              <div id="qr-code-container" className="bg-white p-2 rounded-lg mt-4 w-[220px] h-[220px] flex items-center justify-center">
+              <div
+                id="qr-code-container"
+                className="bg-white p-2 rounded-lg mt-4 w-[220px] h-[220px] flex items-center justify-center"
+              >
                 <QRCodeSVG
                   value={productCode.toString()}
                   size={200}
@@ -436,7 +449,9 @@ export default function Dashboard() {
                   margin={10}
                 />
               </div>
-              <p className="text-sm text-green-700 mt-2">Scan this QR code to update product details</p>
+              <p className="text-sm text-green-700 mt-2">
+                Scan this QR code to update product details
+              </p>
               <div className="flex gap-2 justify-center mt-2">
                 <button
                   onClick={async () => {
@@ -449,8 +464,10 @@ export default function Dashboard() {
                         setProductCodeButtonText("Copy Product Code");
                       }, 2000);
                     } catch (error) {
-                      console.error('Failed to copy product code:', error);
-                      setError("Failed to copy product code. Please try again.");
+                      console.error("Failed to copy product code:", error);
+                      setError(
+                        "Failed to copy product code. Please try again.",
+                      );
                     }
                   }}
                   className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
@@ -461,34 +478,40 @@ export default function Dashboard() {
                 <button
                   onClick={async () => {
                     try {
-                      const qrElement = document.getElementById('qr-code-container').querySelector('svg');
-                      const canvas = document.createElement('canvas');
-                      const ctx = canvas.getContext('2d');
-                      
+                      const qrElement = document
+                        .getElementById("qr-code-container")
+                        .querySelector("svg");
+                      const canvas = document.createElement("canvas");
+                      const ctx = canvas.getContext("2d");
+
                       // Set canvas size with padding
                       const padding = 10;
-                      canvas.width = 200 + (padding * 2);
-                      canvas.height = 200 + (padding * 2);
-                      
+                      canvas.width = 200 + padding * 2;
+                      canvas.height = 200 + padding * 2;
+
                       // Convert SVG to image
-                      const svgData = new XMLSerializer().serializeToString(qrElement);
+                      const svgData = new XMLSerializer().serializeToString(
+                        qrElement,
+                      );
                       const img = new Image();
-                      
+
                       img.onload = async () => {
                         // Draw white background
-                        ctx.fillStyle = 'white';
+                        ctx.fillStyle = "white";
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        
+
                         // Draw QR code with padding
                         ctx.drawImage(img, padding, padding);
-                        
+
                         // Convert to blob and copy to clipboard
-                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        const blob = await new Promise((resolve) =>
+                          canvas.toBlob(resolve, "image/png"),
+                        );
                         const clipboardItem = new ClipboardItem({
-                          'image/png': blob
+                          "image/png": blob,
                         });
                         await navigator.clipboard.write([clipboardItem]);
-                        
+
                         setError("QR code copied to clipboard!");
                         setQrCodeButtonText("Copied!");
                         setTimeout(() => {
@@ -496,10 +519,10 @@ export default function Dashboard() {
                           setQrCodeButtonText("Copy QR Code");
                         }, 2000);
                       };
-                      
-                      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+
+                      img.src = "data:image/svg+xml;base64," + btoa(svgData);
                     } catch (error) {
-                      console.error('Failed to copy QR code:', error);
+                      console.error("Failed to copy QR code:", error);
                       setError("Failed to copy QR code. Please try again.");
                     }
                   }}
@@ -594,9 +617,14 @@ export default function Dashboard() {
               <div className="flex flex-col gap-1 bg-white bg-opacity-20 p-4 rounded-md shadow">
                 <div className="flex flex-col items-center">
                   <p className="text-xl font-semibold">Retailer Code</p>
-                  <p className="text-md font-medium text-center mt-2">{facilityCode}</p>
+                  <p className="text-md font-medium text-center mt-2">
+                    {facilityCode}
+                  </p>
                   {facilityCode && (
-                    <div id="retailer-qr-container" className="bg-white p-2 rounded-lg mt-4 w-[220px] h-[220px] flex items-center justify-center">
+                    <div
+                      id="retailer-qr-container"
+                      className="bg-white p-2 rounded-lg mt-4 w-[220px] h-[220px] flex items-center justify-center"
+                    >
                       <QRCodeSVG
                         value={facilityCode.toString()}
                         size={200}
@@ -605,7 +633,9 @@ export default function Dashboard() {
                       />
                     </div>
                   )}
-                  <p className="text-base font-medium text-white mt-3 text-center">Scan this QR code to share your retailer code</p>
+                  <p className="text-base font-medium text-white mt-3 text-center">
+                    Scan this QR code to share your retailer code
+                  </p>
                   <div className="flex gap-2 mt-2">
                     <button
                       onClick={async () => {
@@ -616,8 +646,10 @@ export default function Dashboard() {
                             setProductCodeButtonText("Copy Retailer Code");
                           }, 2000);
                         } catch (error) {
-                          console.error('Failed to copy retailer code:', error);
-                          setError("Failed to copy retailer code. Please try again.");
+                          console.error("Failed to copy retailer code:", error);
+                          setError(
+                            "Failed to copy retailer code. Please try again.",
+                          );
                         }
                       }}
                       className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
@@ -628,43 +660,50 @@ export default function Dashboard() {
                     <button
                       onClick={async () => {
                         try {
-                          const qrElement = document.getElementById('retailer-qr-container').querySelector('svg');
-                          const canvas = document.createElement('canvas');
-                          const ctx = canvas.getContext('2d');
-                          
+                          const qrElement = document
+                            .getElementById("retailer-qr-container")
+                            .querySelector("svg");
+                          const canvas = document.createElement("canvas");
+                          const ctx = canvas.getContext("2d");
+
                           // Set canvas size with padding
                           const padding = 10;
                           canvas.width = 220;
                           canvas.height = 220;
-                          
+
                           // Convert SVG to image
-                          const svgData = new XMLSerializer().serializeToString(qrElement);
+                          const svgData = new XMLSerializer().serializeToString(
+                            qrElement,
+                          );
                           const img = new Image();
-                          
+
                           img.onload = async () => {
                             // Draw white background
-                            ctx.fillStyle = 'white';
+                            ctx.fillStyle = "white";
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            
+
                             // Draw QR code with padding
                             ctx.drawImage(img, padding, padding);
-                            
+
                             // Convert to blob and copy to clipboard
-                            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                            const blob = await new Promise((resolve) =>
+                              canvas.toBlob(resolve, "image/png"),
+                            );
                             const clipboardItem = new ClipboardItem({
-                              'image/png': blob
+                              "image/png": blob,
                             });
                             await navigator.clipboard.write([clipboardItem]);
-                            
+
                             setQrCodeButtonText("Copied!");
                             setTimeout(() => {
                               setQrCodeButtonText("Copy QR Code");
                             }, 2000);
                           };
-                          
-                          img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+
+                          img.src =
+                            "data:image/svg+xml;base64," + btoa(svgData);
                         } catch (error) {
-                          console.error('Failed to copy QR code:', error);
+                          console.error("Failed to copy QR code:", error);
                           setError("Failed to copy QR code. Please try again.");
                         }
                       }}
@@ -959,7 +998,11 @@ export default function Dashboard() {
             onClose={handleToggleRetailerModal}
             subComponent={
               <div className="flex flex-col gap-y-7">
-                <CustomTable distributorId={facilityCode} />
+                <CustomTable
+                  distributorId={facilityCode}
+                  retailerDetails={retailerDetails}
+                  onRetailerRemoved={setRetailPartnerIds}
+                />
                 <p className="text-lg font-semibold">Add new retailer</p>
                 <CustomTextBoxWithButton
                   distributorId={facilityCode}
