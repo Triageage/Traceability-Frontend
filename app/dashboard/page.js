@@ -442,7 +442,7 @@ export default function Dashboard() {
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(productCode);
-                      setError("Product code copied to clipboard!");
+                      // setError("Product code copied to clipboard!");
                       setProductCodeButtonText("Copied!");
                       setTimeout(() => {
                         setError(null);
@@ -489,7 +489,7 @@ export default function Dashboard() {
                         });
                         await navigator.clipboard.write([clipboardItem]);
                         
-                        setError("QR code copied to clipboard!");
+                        // setError("QR code copied to clipboard!");
                         setQrCodeButtonText("Copied!");
                         setTimeout(() => {
                           setError(null);
