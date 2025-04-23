@@ -97,7 +97,7 @@ export default function SignUp() {
               <div className="flex flex-col gap-1 bg-white bg-opacity-15 shadow-md rounded-md p-5 justify-center w-full lg:w-1/4">
                 <p>Expiry Date</p>
                 <p className="text-2xl font-bold">
-                  {new Date(expiry / 1000).toLocaleString().slice(0, 10)}
+                  {new Date(expiry / 1).toLocaleString().slice(0, 10)}
                 </p>
               </div>
               <div className="flex items-center bg-white bg-opacity-15 shadow-md rounded-md p-5 w-full lg:w-2/4">
