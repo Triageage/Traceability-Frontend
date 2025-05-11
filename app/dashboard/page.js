@@ -259,6 +259,7 @@ export default function Dashboard() {
       setError(error.message);
     } else {
       setShowModal(false);
+      window.location.reload();
     }
   };
 

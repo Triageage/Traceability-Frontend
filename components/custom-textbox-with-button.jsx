@@ -53,6 +53,7 @@ export default function CustomTextBoxWithButton({ distributorId, label }) {
     } finally {
       setLoading(false);
     }
+    window.location.reload();
   }
 
   return (
