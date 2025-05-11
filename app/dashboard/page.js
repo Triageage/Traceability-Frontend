@@ -154,11 +154,11 @@ export default function Dashboard() {
 
           // Compare coordinates with some tolerance for accuracy
           const latMatch =
-            Math.abs(storedCoords.latitude - currentCoords.latitude) < 0.0001;
+            Math.abs(storedCoords.latitude - currentCoords.latitude) < 100;
           const lonMatch =
-            Math.abs(storedCoords.longitude - currentCoords.longitude) < 0.0001;
+            Math.abs(storedCoords.longitude - currentCoords.longitude) < 100;
           const accMatch =
-            Math.abs(storedCoords.accuracy - currentCoords.accuracy) < 10;
+            Math.abs(storedCoords.accuracy - currentCoords.accuracy) < 100;
 
           setCoordinatesMatch(latMatch && lonMatch && accMatch);
         }
